@@ -37,7 +37,39 @@
     <div class="container">
       <div class="dashboard-header">
         <h2>🏀 Basketball — NBA Analytics</h2>
-        <p class="text-muted">Choose your filters below, then view the report with those parameters applied.</p>
+        <p class="text-muted">Choose your filters below, or describe what you want to see using the AI prompt.</p>
+      </div>
+
+      <!-- AI Prompt Bar -->
+      <div class="prompt-card">
+        <div class="prompt-header">
+          <div class="prompt-icon">⚡</div>
+          <div>
+            <h3>AI Filter Assistant</h3>
+            <p class="text-muted">Describe what you want to see and filters will be set automatically</p>
+          </div>
+        </div>
+        <form class="prompt-form" onsubmit="event.preventDefault(); processPrompt();">
+          <div class="prompt-input-wrap">
+            <input type="text" id="promptInput" placeholder='Try: "Lakers games last week" or "LeBron James in the Pacific division"' autocomplete="off">
+            <button type="submit" class="btn btn-primary prompt-submit" id="promptBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Generate
+            </button>
+          </div>
+        </form>
+        <div id="promptResult" class="prompt-result" style="display:none"></div>
+        <div class="prompt-examples">
+          <span class="text-muted" style="font-size:.75rem">Examples:</span>
+          <button class="prompt-example-chip" onclick="fillPrompt('Boston Celtics games this season')">Boston Celtics this season</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('Lakers vs all teams last 7 days')">Lakers last 7 days</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('LeBron James past games')">LeBron James past games</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('Southeast division yesterday')">Southeast division yesterday</button>
+        </div>
+      </div>
+
+      <div class="section-divider">
+        <span>or set filters manually</span>
       </div>
 
       <!-- Filter Card -->

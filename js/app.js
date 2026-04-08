@@ -167,3 +167,155 @@ function resetFilters() {
   document.querySelectorAll("[data-range]").forEach(b => b.classList.remove("active"));
   sessionStorage.removeItem("selectedFilters");
 }
+
+// ============================================================
+// AI Prompt Filter Assistant
+// ============================================================
+
+function fillPrompt(text) {
+  document.getElementById("promptInput").value = text;
+  document.getElementById("promptInput").focus();
+}
+
+function processPrompt() {
+  const input = document.getElementById("promptInput").value.trim();
+  if (!input) return;
+
+  const resultEl = document.getElementById("promptResult");
+  resultEl.style.display = "block";
+  resultEl.className = "prompt-result loading";
+  resultEl.innerHTML = '<span class="prompt-spinner"></span> Analyzing your request...';
+
+  // Simulate a brief processing delay for UX
+  setTimeout(() => {
+    const parsed = parsePrompt(input);
+    applyParsedFilters(parsed);
+    showPromptResult(parsed, resultEl);
+  }, 600);
+}
+
+function parsePrompt(input) {
+  const text = input.toLowerCase();
+  const result = { division: null, team: null, player: null, dateRange: null, matched: [] };
+  const today = new Date();
+  const fmt = d => d.toISOString().split("T")[0];
+
+  // --- Date parsing ---
+  if (/\btoday\b/.test(text)) {
+    result.dateRange = { start: fmt(today), end: fmt(today) };
+    result.matched.push("Date: Today");
+  } else if (/\byesterday\b/.test(text)) {
+    const y = new Date(today); y.setDate(y.getDate() - 1);
+    result.dateRange = { start: fmt(y), end: fmt(y) };
+    result.matched.push("Date: Yesterday");
+  } else if (/\btomorrow\b/.test(text)) {
+    const t = new Date(today); t.setDate(t.getDate() + 1);
+    result.dateRange = { start: fmt(t), end: fmt(t) };
+    result.matched.push("Date: Tomorrow");
+  } else if (/\blast\s*(7|seven)\s*days?\b|\bpast\s*week\b|\blast\s*week\b/.test(text)) {
+    const d = new Date(today); d.setDate(d.getDate() - 7);
+    result.dateRange = { start: fmt(d), end: fmt(today) };
+    result.matched.push("Date: Last 7 days");
+  } else if (/\bnext\s*(7|seven)\s*days?\b|\bnext\s*week\b/.test(text)) {
+    const d = new Date(today); d.setDate(d.getDate() + 7);
+    result.dateRange = { start: fmt(today), end: fmt(d) };
+    result.matched.push("Date: Next 7 days");
+  } else if (/\blast\s*(30|thirty)\s*days?\b|\blast\s*month\b|\bpast\s*month\b/.test(text)) {
+    const d = new Date(today); d.setDate(d.getDate() - 30);
+    result.dateRange = { start: fmt(d), end: fmt(today) };
+    result.matched.push("Date: Last 30 days");
+  } else if (/\bthis\s*season\b|\bfull\s*season\b|\ball\s*season\b|\bentire\s*season\b/.test(text)) {
+    result.dateRange = { start: "2025-10-21", end: "2026-04-12" };
+    result.matched.push("Date: Full season");
+  } else if (/\bpast\b|\bhistor/.test(text)) {
+    result.dateRange = { start: "2025-10-21", end: fmt(today) };
+    result.matched.push("Date: Past games");
+  }
+
+  // --- Team parsing ---
+  const allTeams = Object.values(CONFIG.teamsByDivision).flat();
+  // Build lookup: full name, city name, and nickname
+  for (const team of allTeams) {
+    const parts = team.split(" ");
+    const nickname = parts[parts.length - 1].toLowerCase(); // e.g. "celtics"
+    const city = parts.slice(0, -1).join(" ").toLowerCase(); // e.g. "boston"
+    if (text.includes(team.toLowerCase()) || text.includes(nickname) || text.includes(city)) {
+      result.team = team;
+      // Find which division this team is in
+      for (const [div, teams] of Object.entries(CONFIG.teamsByDivision)) {
+        if (teams.includes(team)) {
+          result.division = div;
+          break;
+        }
+      }
+      result.matched.push("Team: " + team);
+      break;
+    }
+  }
+
+  // --- Division parsing (only if no team already matched) ---
+  if (!result.division) {
+    for (const div of CONFIG.divisions) {
+      if (text.includes(div.toLowerCase())) {
+        result.division = div;
+        result.matched.push("Division: " + div);
+        break;
+      }
+    }
+  }
+
+  // --- Player parsing ---
+  // Look for capitalized name patterns in the original input (not lowercased)
+  const nameMatch = input.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/);
+  if (nameMatch) {
+    const possibleName = nameMatch[1];
+    // Make sure it's not a team name or division
+    const isTeam = allTeams.some(t => t === possibleName);
+    const isDiv = CONFIG.divisions.some(d => d === possibleName);
+    if (!isTeam && !isDiv) {
+      result.player = possibleName;
+      result.matched.push("Player: " + possibleName);
+    }
+  }
+
+  return result;
+}
+
+function applyParsedFilters(parsed) {
+  // Reset first
+  resetFilters();
+
+  // Apply date range
+  if (parsed.dateRange) {
+    document.getElementById("filterDateStart").value = parsed.dateRange.start;
+    document.getElementById("filterDateEnd").value = parsed.dateRange.end;
+  }
+
+  // Apply division
+  if (parsed.division) {
+    document.getElementById("filterDivision").value = parsed.division;
+    populateTeams(parsed.division);
+  }
+
+  // Apply team
+  if (parsed.team) {
+    document.getElementById("filterTeam").value = parsed.team;
+  }
+
+  // Apply player
+  if (parsed.player) {
+    document.getElementById("filterPlayer").value = parsed.player;
+  }
+}
+
+function showPromptResult(parsed, el) {
+  if (parsed.matched.length === 0) {
+    el.className = "prompt-result error";
+    el.innerHTML = '⚠️ Could not understand that query. Try mentioning a <strong>team name</strong>, <strong>division</strong>, <strong>player name</strong>, or <strong>time range</strong> (e.g. "Lakers last 7 days").';
+    return;
+  }
+
+  const chips = parsed.matched.map(m => '<span class="prompt-match-chip">' + m + '</span>').join("");
+  el.className = "prompt-result success";
+  el.innerHTML = '✅ Filters applied: ' + chips + ' <button class="btn btn-primary btn-sm" onclick="viewReport()" style="margin-left:.75rem">View Report →</button>';
+}
