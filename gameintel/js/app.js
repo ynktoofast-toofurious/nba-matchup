@@ -3,6 +3,9 @@
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Update Gemini status indicators on any page
+  if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators();
+
   // Only run filter page logic on the basketball (dashboard) page
   if (!document.getElementById("filterDivision")) return;
 
@@ -186,19 +189,32 @@ function processPrompt() {
   const resultEl = document.getElementById("promptResult");
   resultEl.style.display = "block";
   resultEl.className = "prompt-result loading";
-  resultEl.innerHTML = '<span class="prompt-spinner"></span> Analyzing your request...';
 
-  setTimeout(() => {
-    try {
-      const parsed = parsePrompt(input);
-      applyParsedFilters(parsed);
-      showPromptResult(parsed, resultEl);
-    } catch (err) {
-      console.error("Prompt processing error:", err);
-      resultEl.className = "prompt-result error";
-      resultEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Error: ' + err.message;
-    }
-  }, 600);
+  const parsed = parsePrompt(input);
+  applyParsedFilters(parsed);
+
+  // Use Gemini if available, otherwise fall back to offline AI
+  if (typeof GeminiAI !== "undefined" && GeminiAI.isAvailable()) {
+    resultEl.innerHTML = '<span class="prompt-spinner"></span> <span class="gemini-thinking">Gemini is thinking...</span>';
+    GeminiAI.queryStructured(input, parsed).then(function(response) {
+      renderSemanticResponse(response, parsed, resultEl);
+    }).catch(function(err) {
+      console.warn("Gemini error, falling back to offline:", err.message);
+      var semanticResponse = semanticQuery(input, parsed);
+      renderSemanticResponse(semanticResponse, parsed, resultEl);
+    });
+  } else {
+    resultEl.innerHTML = '<span class="prompt-spinner"></span> Analyzing your request...';
+    setTimeout(() => {
+      try {
+        showPromptResult(parsed, resultEl);
+      } catch (err) {
+        console.error("Prompt processing error:", err);
+        resultEl.className = "prompt-result error";
+        resultEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Error: ' + err.message;
+      }
+    }, 600);
+  }
 }
 
 function parsePrompt(input) {
@@ -241,12 +257,17 @@ function parsePrompt(input) {
 
   // --- Team parsing ---
   const allTeams = Object.values(CONFIG.teamsByDivision).flat();
-  // Build lookup: full name, city name, and nickname
-  for (const team of allTeams) {
+  // Sort by name length descending so longer names match first (e.g. "Los Angeles Lakers" before "LA Clippers")
+  const sortedTeams = allTeams.slice().sort(function(a, b) { return b.length - a.length; });
+  // Build lookup: full name, city name, and nickname — use word boundaries to avoid partial matches
+  for (const team of sortedTeams) {
     const parts = team.split(" ");
     const nickname = parts[parts.length - 1].toLowerCase(); // e.g. "celtics"
     const city = parts.slice(0, -1).join(" ").toLowerCase(); // e.g. "boston"
-    if (text.includes(team.toLowerCase()) || text.includes(nickname) || text.includes(city)) {
+    const fullLower = team.toLowerCase();
+    // Use word boundary regex to prevent "la" matching inside "lakers"
+    const wordBound = function(w) { return new RegExp("\\b" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b"); };
+    if (wordBound(fullLower).test(text) || wordBound(nickname).test(text) || wordBound(city).test(text)) {
       result.team = team;
       // Find which division this team is in
       for (const [div, teams] of Object.entries(CONFIG.teamsByDivision)) {

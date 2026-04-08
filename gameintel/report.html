@@ -33,11 +33,17 @@
     <!-- Left: AI Assistant + Filter Guide Panel (25%) -->
     <aside class="filter-guide" id="filterGuide">
       <div class="guide-header">
-        <div class="guide-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/></svg>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="guide-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/></svg>
+          </div>
+          <button class="btn btn-ghost btn-xs gemini-settings-btn" onclick="GeminiAI.showSettings()" title="AI Settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
         </div>
         <h3>AI Assistant</h3>
-        <p class="text-muted">Ask questions about the data or get filter guidance</p>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <p class="text-muted" style="margin:0;flex:1">Ask questions about the data or get filter guidance</p>
+          <span class="gemini-status-badge offline" onclick="GeminiAI.showSettings()" style="flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="3"><circle cx="12" cy="12" r="8"/></svg> Offline AI</span>
+        </div>
       </div>
 
       <!-- Mini AI Prompt (on report page) -->
@@ -86,6 +92,7 @@
   <script src="js/users.js?v=20260409"></script>
   <script src="js/auth.js?v=20260409"></script>
   <script src="js/semantic-ai.js?v=20260409"></script>
+  <script src="js/gemini.js?v=20260409"></script>
   <script src="js/app.js?v=20260409"></script>
   <script src="js/powerbi.js?v=20260409"></script>
 </body>

@@ -207,8 +207,10 @@ function populateFilterGuide() {
   if (aiData) {
     try {
       var ai = JSON.parse(aiData);
+      var srcClass = ai.source === "gemini" ? "gemini" : "offline";
+      var srcLabel = ai.source === "gemini" ? "Gemini" : "Offline AI";
       html += '<div class="guide-ai-answer">';
-      html += '<div class="guide-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> AI Analysis</div>';
+      html += '<div class="guide-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> AI Analysis <span class="ai-source-label ' + srcClass + '">' + srcLabel + '</span></div>';
       html += '<div class="guide-ai-body">' + ai.answer + '</div>';
       if (ai.insight) {
         html += '<div class="guide-ai-insight"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f0c000" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/></svg> ' + ai.insight + '</div>';
@@ -279,45 +281,57 @@ function processReportPrompt() {
   var container = document.getElementById("guideSteps");
   if (!container) return;
 
-  // Show loading state
-  container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem">Analyzing...</p></div>';
+  var parsed = parsePrompt(input);
 
-  setTimeout(function() {
+  function storeAndRender(response) {
     try {
-      var parsed = parsePrompt(input);
-      var response = semanticQuery(input, parsed);
+      var aiData = JSON.stringify({
+        answer: response.answer,
+        insight: response.insight,
+        suggestedVisuals: response.suggestedVisuals || [],
+        measures: response.measures,
+        filterLogic: response.filterLogic,
+        source: response.source || "offline"
+      });
+      sessionStorage.setItem("aiResponse", aiData);
+      localStorage.setItem("aiResponse", aiData);
+    } catch (e) { /* storage full */ }
 
-      // Store the AI response
-      try {
-        var aiData = JSON.stringify({
-          answer: response.answer,
-          insight: response.insight,
-          suggestedVisuals: response.suggestedVisuals || [],
-          measures: response.measures,
-          filterLogic: response.filterLogic
-        });
-        sessionStorage.setItem("aiResponse", aiData);
-        localStorage.setItem("aiResponse", aiData);
-      } catch (e) { /* storage full */ }
-
-      // Store filters if entity matched
-      if (parsed.matched.length > 0) {
-        var filters = {
-          dateStart: parsed.dateRange ? parsed.dateRange.start : "2025-10-21",
-          dateEnd: parsed.dateRange ? parsed.dateRange.end : "2026-04-12",
-          division: parsed.division || "All",
-          team: parsed.team || "All",
-          player: parsed.player || ""
-        };
-        sessionStorage.setItem("selectedFilters", JSON.stringify(filters));
-        localStorage.setItem("selectedFilters", JSON.stringify(filters));
-      }
-
-      populateFilterGuide();
-    } catch (err) {
-      container.innerHTML = '<div class="guide-empty"><p style="color:var(--accent-red)">Could not understand that query.</p><p class="text-muted">Try asking about a team, player, division, or measure.</p></div>';
+    if (parsed.matched.length > 0) {
+      var filters = {
+        dateStart: parsed.dateRange ? parsed.dateRange.start : "2025-10-21",
+        dateEnd: parsed.dateRange ? parsed.dateRange.end : "2026-04-12",
+        division: parsed.division || "All",
+        team: parsed.team || "All",
+        player: parsed.player || ""
+      };
+      sessionStorage.setItem("selectedFilters", JSON.stringify(filters));
+      localStorage.setItem("selectedFilters", JSON.stringify(filters));
     }
-  }, 400);
+    populateFilterGuide();
+  }
+
+  // Use Gemini if available, else offline engine
+  if (typeof GeminiAI !== "undefined" && GeminiAI.isAvailable()) {
+    container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem"><span class="gemini-thinking">Gemini is thinking...</span></p></div>';
+    GeminiAI.queryStructured(input, parsed).then(function(response) {
+      storeAndRender(response);
+    }).catch(function(err) {
+      console.warn("Gemini error, falling back to offline:", err.message);
+      var response = semanticQuery(input, parsed);
+      storeAndRender(response);
+    });
+  } else {
+    container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem">Analyzing...</p></div>';
+    setTimeout(function() {
+      try {
+        var response = semanticQuery(input, parsed);
+        storeAndRender(response);
+      } catch (err) {
+        container.innerHTML = '<div class="guide-empty"><p style="color:var(--accent-red)">Could not understand that query.</p><p class="text-muted">Try asking about a team, player, division, or measure.</p></div>';
+      }
+    }, 400);
+  }
 }
 
 // ============================================================

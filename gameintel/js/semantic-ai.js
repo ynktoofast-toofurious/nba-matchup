@@ -772,8 +772,10 @@ function renderSemanticResponse(response, parsed, targetEl) {
   var html = '<div class="ai-response-card">';
 
   // Answer section
+  var sourceClass = response.source === "gemini" ? "gemini" : "offline";
+  var sourceLabel = response.source === "gemini" ? "Gemini" : "Offline AI";
   html += '<div class="ai-answer-section">';
-  html += '<div class="ai-answer-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> <span>AI Analysis</span></div>';
+  html += '<div class="ai-answer-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> <span>AI Analysis</span><span class="ai-source-label ' + sourceClass + '">' + sourceLabel + '</span></div>';
   html += '<div class="ai-answer-body">' + response.answer + '</div>';
   if (response.insight) {
     html += '<div class="ai-insight"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0c000" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/></svg> ' + response.insight + '</div>';

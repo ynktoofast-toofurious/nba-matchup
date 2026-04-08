@@ -887,6 +887,170 @@ a:hover{color:var(--accent-light)}
 }
 .embed-error p{color:var(--text-muted);font-size:.9375rem}
 
+/* ===== GEMINI AI ===== */
+
+/* Status Badge (clickable) */
+.gemini-status-badge{
+  display:inline-flex;align-items:center;gap:.375rem;
+  padding:.25rem .625rem;
+  border-radius:20px;
+  font-size:.6875rem;font-weight:600;
+  cursor:pointer;
+  transition:all var(--transition);
+  white-space:nowrap;
+}
+.gemini-status-badge.offline{
+  background:rgba(139,148,158,.08);
+  border:1px solid rgba(139,148,158,.2);
+  color:var(--text-muted);
+}
+.gemini-status-badge.offline:hover{
+  background:rgba(139,148,158,.15);
+  border-color:var(--text-muted);
+}
+.gemini-status-badge.connected{
+  background:rgba(63,185,80,.08);
+  border:1px solid rgba(63,185,80,.25);
+  color:var(--accent-green);
+}
+.gemini-status-badge.connected:hover{
+  background:rgba(63,185,80,.15);
+  border-color:var(--accent-green);
+}
+
+/* Settings button */
+.gemini-settings-btn{
+  padding:.375rem!important;
+  opacity:.6;
+  transition:opacity var(--transition);
+}
+.gemini-settings-btn:hover{opacity:1}
+.btn-xs{padding:.25rem .5rem;font-size:.75rem}
+
+/* Prompt header layout with actions */
+.prompt-header{position:relative}
+.prompt-header-actions{
+  display:flex;align-items:center;gap:.5rem;
+  position:absolute;top:0;right:0;
+}
+
+/* Thinking animation */
+.gemini-thinking{
+  background:var(--gradient-brand);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:geminiPulse 1.5s ease-in-out infinite;
+}
+@keyframes geminiPulse{
+  0%,100%{opacity:1}
+  50%{opacity:.5}
+}
+
+/* Source label in AI response */
+.ai-source-label{
+  display:inline-flex;align-items:center;gap:.25rem;
+  font-size:.625rem;font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding:.125rem .5rem;
+  border-radius:10px;
+  margin-left:.5rem;
+  vertical-align:middle;
+}
+.ai-source-label.gemini{
+  background:rgba(88,166,255,.1);
+  color:var(--accent);
+}
+.ai-source-label.offline{
+  background:rgba(139,148,158,.08);
+  color:var(--text-muted);
+}
+
+/* Gemini Settings Modal */
+.gemini-modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  padding:1rem;
+}
+.gemini-modal{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  width:100%;max-width:440px;
+  box-shadow:var(--shadow);
+}
+.gemini-modal-header{
+  padding:1.5rem 1.5rem 1rem;
+  border-bottom:1px solid var(--border);
+}
+.gemini-modal-header .gemini-modal-icon{
+  width:40px;height:40px;
+  border-radius:var(--radius-xs);
+  background:rgba(88,166,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:.75rem;
+}
+.gemini-modal-header h3{
+  font-size:1rem;font-weight:700;color:var(--text-bright);
+  margin-bottom:.25rem;
+}
+.gemini-modal-header p{
+  font-size:.8125rem;color:var(--text-muted);margin:0;
+}
+.gemini-modal-body{
+  padding:1.25rem 1.5rem;
+}
+.gemini-label{
+  display:block;
+  font-size:.75rem;font-weight:600;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:.5rem;
+}
+.gemini-key-wrap{
+  display:flex;gap:.5rem;
+  align-items:center;
+}
+.gemini-key-input{
+  flex:1;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xs);
+  padding:.625rem .75rem;
+  font-family:var(--font-mono);
+  font-size:.8125rem;
+  color:var(--text);
+  outline:none;
+  transition:border-color var(--transition);
+}
+.gemini-key-input:focus{border-color:var(--accent)}
+.gemini-key-input::placeholder{color:var(--text-muted);opacity:.5}
+.gemini-toggle-vis{padding:.5rem!important}
+.gemini-key-status{
+  font-size:.75rem;
+  color:var(--text-muted);
+  margin-top:.5rem;
+}
+.gemini-key-status.connected{
+  color:var(--accent-green);
+  display:flex;align-items:center;gap:.375rem;
+}
+.gemini-help{
+  font-size:.75rem;
+  color:var(--text-muted);
+  margin-top:.75rem;
+}
+.gemini-help a{font-size:.75rem}
+.gemini-modal-footer{
+  display:flex;justify-content:flex-end;gap:.5rem;
+  padding:1rem 1.5rem;
+  border-top:1px solid var(--border);
+}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
   .login-container{flex-direction:column}
