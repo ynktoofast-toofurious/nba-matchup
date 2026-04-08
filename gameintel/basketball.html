@@ -169,23 +169,30 @@
   <script src="js/gemini.js"></script>
   <script src="js/app.js"></script>
   <script>
-    // Silently acquire a Power BI token so the AI can run DAX queries
+    // Acquire a Power BI token so the AI can run DAX queries
+    var _bbMsalInstance = null;
     (function() {
       if (!CONFIG.auth.clientId || CONFIG.auth.clientId === "YOUR_CLIENT_ID" || typeof msal === "undefined") return;
       try {
-        var msalInstance = new msal.PublicClientApplication({
+        _bbMsalInstance = new msal.PublicClientApplication({
           auth: { clientId: CONFIG.auth.clientId, authority: CONFIG.auth.authority, redirectUri: CONFIG.auth.redirectUri },
-          cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
+          cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
         });
-        msalInstance.handleRedirectPromise().then(function(response) {
+        _bbMsalInstance.handleRedirectPromise().then(function(response) {
           if (response) { pbiAccessToken = response.accessToken; if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators(); return; }
-          var accounts = msalInstance.getAllAccounts();
+          var accounts = _bbMsalInstance.getAllAccounts();
           if (accounts.length > 0) {
-            msalInstance.acquireTokenSilent({ scopes: CONFIG.auth.scopes, account: accounts[0] }).then(function(tokenResponse) {
+            _bbMsalInstance.acquireTokenSilent({ scopes: CONFIG.auth.scopes, account: accounts[0] }).then(function(tokenResponse) {
               pbiAccessToken = tokenResponse.accessToken;
               console.log("[Basketball] PBI token acquired silently — AI can query live data");
               if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators();
-            }).catch(function(e) { console.log("[Basketball] Silent token failed, AI will use model knowledge:", e.message); });
+            }).catch(function(e) {
+              console.log("[Basketball] Silent token failed, redirecting to sign in...");
+              _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes });
+            });
+          } else {
+            console.log("[Basketball] No MSAL accounts, redirecting to sign in...");
+            _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes, loginHint: CONFIG.tenant.loginHint || undefined });
           }
         }).catch(function(e) { console.log("[Basketball] MSAL init error:", e.message); });
       } catch(e) { console.log("[Basketball] MSAL not available:", e.message); }

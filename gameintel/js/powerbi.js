@@ -43,7 +43,7 @@ function getMsalInstance() {
       redirectUri: CONFIG.auth.redirectUri
     },
     cache: {
-      cacheLocation: "sessionStorage",
+      cacheLocation: "localStorage",
       storeAuthStateInCookie: false
     }
   };
