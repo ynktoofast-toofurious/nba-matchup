@@ -1,89 +1,46 @@
 // ============================================================
-// Semantic AI Engine — Answers from the Fabric Semantic Layer
-// References: Match by Team, Teams, nba_players tables
-// Measures: Total Games, Win Rate, Avg Score, Teams, Active Players
+// Semantic AI Engine — Queries the Fabric Semantic Layer
+// Generates filter logic (DAX + Power BI URL) and describes
+// what the report will show. No hardcoded stats — directs
+// users to the live report for actual data.
 // ============================================================
 
-var SEMANTIC_DATA = {
-  // Season-level aggregates (from semantic model)
-  season: {
-    totalGames: 1231,
-    winRate: 50.0,
-    avgScore: 115.3,
-    totalTeams: 30,
-    activePlayers: 537,
-    seasonStart: "2025-10-21",
-    seasonEnd: "2026-04-12"
-  },
-
-  // Division-level stats
-  divisions: {
-    Atlantic:   { teams: 5, games: 170, winPct: 46.19, lossPct: 40.05, avgScore: 114.8 },
-    Central:    { teams: 5, games: 173, winPct: 40.64, lossPct: 45.32, avgScore: 113.9 },
-    Southeast:  { teams: 5, games: 176, winPct: 40.89, lossPct: 44.83, avgScore: 116.1 },
-    Northwest:  { teams: 5, games: 156, winPct: 48.76, lossPct: 38.61, avgScore: 114.5 },
-    Pacific:    { teams: 5, games: 162, winPct: 41.83, lossPct: 45.05, avgScore: 116.8 },
-    Southwest:  { teams: 5, games: 170, winPct: 40.89, lossPct: 45.32, avgScore: 115.2 }
-  },
-
-  // Team-level stats (30 NBA teams)
-  teams: {
-    "Boston Celtics":            { division: "Atlantic",  wins: 58, losses: 24, winPct: 70.7, avgScore: 118.2, homeRecord: "32-9", awayRecord: "26-15" },
-    "Brooklyn Nets":             { division: "Atlantic",  wins: 32, losses: 50, winPct: 39.0, avgScore: 112.1, homeRecord: "20-21", awayRecord: "12-29" },
-    "New York Knicks":           { division: "Atlantic",  wins: 50, losses: 32, winPct: 61.0, avgScore: 115.4, homeRecord: "28-13", awayRecord: "22-19" },
-    "Philadelphia 76ers":        { division: "Atlantic",  wins: 47, losses: 35, winPct: 57.3, avgScore: 114.8, homeRecord: "27-14", awayRecord: "20-21" },
-    "Toronto Raptors":           { division: "Atlantic",  wins: 25, losses: 57, winPct: 30.5, avgScore: 110.3, homeRecord: "16-25", awayRecord: "9-32" },
-    "Chicago Bulls":             { division: "Central",   wins: 39, losses: 43, winPct: 47.6, avgScore: 113.5, homeRecord: "23-18", awayRecord: "16-25" },
-    "Cleveland Cavaliers":       { division: "Central",   wins: 55, losses: 27, winPct: 67.1, avgScore: 116.9, homeRecord: "30-11", awayRecord: "25-16" },
-    "Detroit Pistons":           { division: "Central",   wins: 23, losses: 59, winPct: 28.0, avgScore: 109.7, homeRecord: "14-27", awayRecord: "9-32" },
-    "Indiana Pacers":            { division: "Central",   wins: 47, losses: 35, winPct: 57.3, avgScore: 118.6, homeRecord: "26-15", awayRecord: "21-20" },
-    "Milwaukee Bucks":           { division: "Central",   wins: 49, losses: 33, winPct: 59.8, avgScore: 117.3, homeRecord: "28-13", awayRecord: "21-20" },
-    "Atlanta Hawks":             { division: "Southeast", wins: 36, losses: 46, winPct: 43.9, avgScore: 118.4, homeRecord: "22-19", awayRecord: "14-27" },
-    "Charlotte Hornets":         { division: "Southeast", wins: 21, losses: 61, winPct: 25.6, avgScore: 107.8, homeRecord: "13-28", awayRecord: "8-33" },
-    "Miami Heat":                { division: "Southeast", wins: 46, losses: 36, winPct: 56.1, avgScore: 112.5, homeRecord: "27-14", awayRecord: "19-22" },
-    "Orlando Magic":             { division: "Southeast", wins: 50, losses: 32, winPct: 61.0, avgScore: 111.8, homeRecord: "29-12", awayRecord: "21-20" },
-    "Washington Wizards":        { division: "Southeast", wins: 20, losses: 62, winPct: 24.4, avgScore: 108.9, homeRecord: "12-29", awayRecord: "8-33" },
-    "Denver Nuggets":            { division: "Northwest", wins: 50, losses: 32, winPct: 61.0, avgScore: 115.7, homeRecord: "30-11", awayRecord: "20-21" },
-    "Minnesota Timberwolves":    { division: "Northwest", wins: 56, losses: 26, winPct: 68.3, avgScore: 112.9, homeRecord: "31-10", awayRecord: "25-16" },
-    "Oklahoma City Thunder":     { division: "Northwest", wins: 57, losses: 25, winPct: 69.5, avgScore: 118.4, homeRecord: "32-9",  awayRecord: "25-16" },
-    "Portland Trail Blazers":    { division: "Northwest", wins: 21, losses: 61, winPct: 25.6, avgScore: 110.1, homeRecord: "13-28", awayRecord: "8-33" },
-    "Utah Jazz":                 { division: "Northwest", wins: 29, losses: 53, winPct: 35.4, avgScore: 112.4, homeRecord: "17-24", awayRecord: "12-29" },
-    "Golden State Warriors":     { division: "Pacific",   wins: 46, losses: 36, winPct: 56.1, avgScore: 117.2, homeRecord: "27-14", awayRecord: "19-22" },
-    "LA Clippers":               { division: "Pacific",   wins: 38, losses: 44, winPct: 46.3, avgScore: 113.6, homeRecord: "22-19", awayRecord: "16-25" },
-    "Los Angeles Lakers":        { division: "Pacific",   wins: 42, losses: 40, winPct: 51.2, avgScore: 116.8, homeRecord: "25-16", awayRecord: "17-24" },
-    "Phoenix Suns":              { division: "Pacific",   wins: 49, losses: 33, winPct: 59.8, avgScore: 117.9, homeRecord: "28-13", awayRecord: "21-20" },
-    "Sacramento Kings":          { division: "Pacific",   wins: 44, losses: 38, winPct: 53.7, avgScore: 118.5, homeRecord: "25-16", awayRecord: "19-22" },
-    "Dallas Mavericks":          { division: "Southwest", wins: 50, losses: 32, winPct: 61.0, avgScore: 117.6, homeRecord: "28-13", awayRecord: "22-19" },
-    "Houston Rockets":           { division: "Southwest", wins: 41, losses: 41, winPct: 50.0, avgScore: 114.2, homeRecord: "24-17", awayRecord: "17-24" },
-    "Memphis Grizzlies":         { division: "Southwest", wins: 48, losses: 34, winPct: 58.5, avgScore: 116.3, homeRecord: "27-14", awayRecord: "21-20" },
-    "New Orleans Pelicans":      { division: "Southwest", wins: 33, losses: 49, winPct: 40.2, avgScore: 114.7, homeRecord: "20-21", awayRecord: "13-28" },
-    "San Antonio Spurs":         { division: "Southwest", wins: 22, losses: 60, winPct: 26.8, avgScore: 111.0, homeRecord: "14-27", awayRecord: "8-33" }
-  },
-
-  // Semantic model schema reference
-  schema: {
-    tables: {
-      "Match by Team": {
-        description: "Game-level facts — one row per team per game",
-        columns: ["game_id", "game_date", "home_team", "away_team", "home_pts", "away_pts", "result"]
-      },
-      "Teams": {
-        description: "Team dimension — one row per team",
-        columns: ["team_id", "team_name", "division", "conference"]
-      },
-      "nba_players": {
-        description: "Player dimension — one row per player",
-        columns: ["player_id", "player_name", "team_id", "position"]
-      }
+var SEMANTIC_MODEL = {
+  tables: {
+    "Match by Team": {
+      description: "Game-level facts — one row per team per game",
+      columns: ["game_id", "game_date", "home_team", "away_team", "home_pts", "away_pts", "result"]
     },
-    measures: [
-      { name: "Total Games",     expression: "COUNTROWS('Match by Team')" },
-      { name: "Win Rate",        expression: "DIVIDE(CALCULATE(COUNTROWS('Match by Team'), 'Match by Team'[result]=\"W\"), [Total Games])" },
-      { name: "Avg Score",       expression: "AVERAGE('Match by Team'[home_pts])" },
-      { name: "Teams",           expression: "DISTINCTCOUNT(Teams[team_name])" },
-      { name: "Active Players",  expression: "DISTINCTCOUNT(nba_players[player_name])" }
-    ]
-  }
+    "Teams": {
+      description: "Team dimension — 30 NBA teams with division/conference",
+      columns: ["team_id", "team_name", "division", "conference"]
+    },
+    "nba_players": {
+      description: "Player dimension — active roster players",
+      columns: ["player_id", "player_name", "team_id", "position"]
+    }
+  },
+  measures: {
+    "Total Games":    { expression: "COUNTROWS('Match by Team')",                                                                          description: "Count of games played" },
+    "Win Rate":       { expression: "DIVIDE(CALCULATE(COUNTROWS('Match by Team'), 'Match by Team'[result]=\"W\"), [Total Games])",          description: "Percentage of games won" },
+    "Avg Score":      { expression: "AVERAGE('Match by Team'[home_pts])",                                                                  description: "Average points scored per game" },
+    "Teams":          { expression: "DISTINCTCOUNT(Teams[team_name])",                                                                     description: "Number of distinct teams" },
+    "Active Players": { expression: "DISTINCTCOUNT(nba_players[player_name])",                                                             description: "Number of active players" }
+  },
+  relationships: [
+    { from: "Match by Team[home_team]", to: "Teams[team_name]" },
+    { from: "nba_players[team_id]",     to: "Teams[team_id]" }
+  ],
+  season: { start: "2025-10-21", end: "2026-04-12" }
+};
+
+var DIVISION_TEAMS = {
+  Atlantic:  ["Boston Celtics", "Brooklyn Nets", "New York Knicks", "Philadelphia 76ers", "Toronto Raptors"],
+  Central:   ["Chicago Bulls", "Cleveland Cavaliers", "Detroit Pistons", "Indiana Pacers", "Milwaukee Bucks"],
+  Southeast: ["Atlanta Hawks", "Charlotte Hornets", "Miami Heat", "Orlando Magic", "Washington Wizards"],
+  Northwest: ["Denver Nuggets", "Minnesota Timberwolves", "Oklahoma City Thunder", "Portland Trail Blazers", "Utah Jazz"],
+  Pacific:   ["Golden State Warriors", "LA Clippers", "Los Angeles Lakers", "Phoenix Suns", "Sacramento Kings"],
+  Southwest: ["Dallas Mavericks", "Houston Rockets", "Memphis Grizzlies", "New Orleans Pelicans", "San Antonio Spurs"]
 };
 
 // ============================================================
@@ -92,44 +49,49 @@ var SEMANTIC_DATA = {
 
 function semanticQuery(input, parsed) {
   var text = input.toLowerCase();
-  var response = { answer: "", insight: "", filterLogic: [], measures: [], tables: [] };
+  var intent = detectIntent(text);
 
-  // Determine what the user is asking about
-  var isWinRate = /win\s*rate|record|wins?|loss|performance|how.*doing/.test(text);
-  var isScore = /score|points?|average|avg|scoring|offensive/.test(text);
-  var isGames = /games?|schedule|matchup|played/.test(text);
-  var isCompare = /compare|vs|versus|better|worse|rank/.test(text);
-  var isBest = /best|top|leading|strongest|highest/.test(text);
-  var isWorst = /worst|bottom|weakest|lowest|struggling/.test(text);
-  var isOverview = /overview|summary|stats|tell me about|show me|how is/.test(text);
-  var isHomeAway = /home|away|road/.test(text);
-
-  // Default to overview if no specific ask detected
-  if (!isWinRate && !isScore && !isGames && !isCompare && !isBest && !isWorst && !isHomeAway) {
-    isOverview = true;
-  }
-
-  // Build response based on context
   if (parsed.team) {
-    response = buildTeamResponse(parsed.team, parsed, { isWinRate: isWinRate, isScore: isScore, isGames: isGames, isHomeAway: isHomeAway, isOverview: isOverview });
+    return buildTeamQuery(parsed.team, parsed, intent);
   } else if (parsed.division) {
-    response = buildDivisionResponse(parsed.division, parsed, { isBest: isBest, isWorst: isWorst, isWinRate: isWinRate, isScore: isScore, isOverview: isOverview });
-  } else if (isBest || isWorst) {
-    response = buildLeagueRankingResponse(isBest, { isWinRate: isWinRate, isScore: isScore });
+    return buildDivisionQuery(parsed.division, parsed, intent);
+  } else if (parsed.player) {
+    return buildPlayerQuery(parsed.player, parsed, intent);
   } else {
-    response = buildLeagueOverviewResponse(parsed);
+    return buildLeagueQuery(parsed, intent);
   }
-
-  return response;
 }
 
-function buildTeamResponse(teamName, parsed, flags) {
-  var team = SEMANTIC_DATA.teams[teamName];
-  if (!team) return { answer: "Team not found in the semantic model.", insight: "", filterLogic: [], measures: [], tables: [] };
+function detectIntent(text) {
+  return {
+    winRate:   /win\s*rate|record|wins?|loss|performance|how.*doing|standing/.test(text),
+    score:     /score|points?|average|avg|scoring|offensive/.test(text),
+    games:     /games?|schedule|matchup|played|upcoming/.test(text),
+    homeAway:  /home|away|road/.test(text),
+    compare:   /compare|vs|versus|better|worse/.test(text),
+    best:      /best|top|leading|strongest|highest/.test(text),
+    worst:     /worst|bottom|weakest|lowest|struggling/.test(text)
+  };
+}
 
-  var response = { answer: "", insight: "", filterLogic: [], measures: [], tables: ["Match by Team", "Teams"] };
+// ============================================================
+// Query Builders
+// ============================================================
 
-  // Build filter logic
+function buildTeamQuery(teamName, parsed, intent) {
+  var division = "";
+  for (var div in DIVISION_TEAMS) {
+    if (DIVISION_TEAMS[div].indexOf(teamName) !== -1) { division = div; break; }
+  }
+
+  var response = {
+    answer: "",
+    insight: "",
+    filterLogic: [],
+    measures: [],
+    tables: ["Match by Team", "Teams"]
+  };
+
   response.filterLogic.push({
     table: "Teams",
     column: "team_name",
@@ -138,139 +100,126 @@ function buildTeamResponse(teamName, parsed, flags) {
     dax: "Teams[team_name] = \"" + teamName + "\""
   });
 
-  if (parsed.dateRange) {
-    response.filterLogic.push({
-      table: "Match by Team",
-      column: "game_date",
-      operator: "between",
-      value: parsed.dateRange.start + " to " + parsed.dateRange.end,
-      dax: "'Match by Team'[game_date] >= DATE(" + parsed.dateRange.start.replace(/-/g, ",") + ") && 'Match by Team'[game_date] <= DATE(" + parsed.dateRange.end.replace(/-/g, ",") + ")"
-    });
-  }
+  addDateFilter(response, parsed);
 
-  // Build answer
-  var totalGames = team.wins + team.losses;
-  response.answer = "<strong>" + teamName + "</strong> (" + team.division + " Division) have a record of " +
-    "<strong>" + team.wins + "-" + team.losses + "</strong> (" + team.winPct + "% win rate) this season, " +
-    "averaging <strong>" + team.avgScore + " points</strong> per game across " + totalGames + " games played.";
-
-  if (flags.isHomeAway) {
-    response.answer += "<br><br>Home record: <strong>" + team.homeRecord + "</strong> | Away record: <strong>" + team.awayRecord + "</strong>";
-    response.measures.push("Total Games", "Win Rate", "Home vs Away");
+  if (intent.homeAway) {
+    response.measures = ["Total Games", "Win Rate", "Avg Score"];
+    response.answer = "Filtering the report for <strong>" + teamName + "</strong>" +
+      (division ? " (" + division + " Division)" : "") +
+      " to show their <strong>home vs away performance</strong>." +
+      "<br><br>The report will display:" +
+      "<ul class='ai-list'>" +
+      "<li><strong>Total Games</strong> — split by home and away</li>" +
+      "<li><strong>Win Rate</strong> — home court vs road performance</li>" +
+      "<li>The <em>Home vs Away</em> visual breaks down W/L by location</li>" +
+      "</ul>";
+    response.insight = "Use the Home vs Away visual on the report to compare their record at home versus on the road.";
+  } else if (intent.score) {
+    response.measures = ["Avg Score", "Total Games"];
+    response.answer = "Filtering the report for <strong>" + teamName + "</strong>" +
+      (division ? " (" + division + " Division)" : "") +
+      " to analyze their <strong>scoring output</strong>." +
+      "<br><br>The report will show:" +
+      "<ul class='ai-list'>" +
+      "<li><strong>Avg Score</strong> — <code>AVERAGE('Match by Team'[home_pts])</code></li>" +
+      "<li><strong>Games Over Time</strong> chart for scoring trends</li>" +
+      "<li><strong>Match Schedule</strong> with game-by-game scores (HomePts, AwayPts)</li>" +
+      "</ul>";
+    response.insight = "Check the Match Schedule table for individual game scoring details.";
   } else {
-    response.measures.push("Total Games", "Win Rate", "Avg Score");
-  }
-
-  // Insight
-  if (team.winPct >= 60) {
-    response.insight = "This is a top-tier team with a strong season performance. They're among the league's best.";
-  } else if (team.winPct >= 50) {
-    response.insight = "A solid playoff-caliber team with a winning record. Competitive in their division.";
-  } else if (team.winPct >= 40) {
-    response.insight = "Currently below .500 and fighting for a play-in spot. Inconsistent performance.";
-  } else {
-    response.insight = "Struggling this season with a losing record. In the bottom tier of the league.";
+    response.measures = ["Total Games", "Win Rate", "Avg Score"];
+    response.answer = "Filtering the report for <strong>" + teamName + "</strong>" +
+      (division ? " (" + division + " Division)" : "") +
+      " to show their <strong>season performance</strong>." +
+      "<br><br>The report will display:" +
+      "<ul class='ai-list'>" +
+      "<li><strong>Total Games</strong> — games played this season</li>" +
+      "<li><strong>Win Rate</strong> — win/loss percentage</li>" +
+      "<li><strong>Avg Score</strong> — average points per game</li>" +
+      "<li><strong>Division Win/Loss Record</strong> — how they compare in the " + (division || "their") + " division</li>" +
+      "<li><strong>Games Over Time</strong> — game trend over the season</li>" +
+      "<li><strong>Home vs Away</strong> — W/L breakdown by venue</li>" +
+      "</ul>";
+    response.insight = "Apply these filters and view the report to see live data from the Fabric semantic model.";
   }
 
   return response;
 }
 
-function buildDivisionResponse(divName, parsed, flags) {
-  var div = SEMANTIC_DATA.divisions[divName];
-  if (!div) return { answer: "Division not found.", insight: "", filterLogic: [], measures: [], tables: [] };
+function buildDivisionQuery(divName, parsed, intent) {
+  var teams = DIVISION_TEAMS[divName];
+  if (!teams) return { answer: "Division not found in the semantic model.", insight: "", filterLogic: [], measures: [], tables: [] };
 
-  var response = { answer: "", insight: "", filterLogic: [], measures: ["Total Games", "Win Rate", "Avg Score"], tables: ["Match by Team", "Teams"] };
-
-  // Get teams in this division sorted by win%
-  var divTeams = [];
-  for (var t in SEMANTIC_DATA.teams) {
-    if (SEMANTIC_DATA.teams[t].division === divName) {
-      divTeams.push({ name: t, data: SEMANTIC_DATA.teams[t] });
-    }
-  }
-  divTeams.sort(function(a, b) { return b.data.winPct - a.data.winPct; });
+  var response = {
+    answer: "",
+    insight: "",
+    filterLogic: [],
+    measures: ["Total Games", "Win Rate", "Avg Score"],
+    tables: ["Match by Team", "Teams"]
+  };
 
   response.filterLogic.push({
     table: "Teams",
     column: "team_name",
     operator: "in",
-    value: divTeams.map(function(t) { return t.name; }).join(", "),
-    dax: "Teams[team_name] IN {" + divTeams.map(function(t) { return '"' + t.name + '"'; }).join(", ") + "}"
+    value: teams.join(", "),
+    dax: "Teams[team_name] IN {" + teams.map(function(t) { return '"' + t + '"'; }).join(", ") + "}"
   });
 
-  if (parsed.dateRange) {
-    response.filterLogic.push({
-      table: "Match by Team",
-      column: "game_date",
-      operator: "between",
-      value: parsed.dateRange.start + " to " + parsed.dateRange.end,
-      dax: "'Match by Team'[game_date] >= DATE(" + parsed.dateRange.start.replace(/-/g, ",") + ") && 'Match by Team'[game_date] <= DATE(" + parsed.dateRange.end.replace(/-/g, ",") + ")"
-    });
-  }
+  addDateFilter(response, parsed);
 
-  // Build standings table
-  var standingsRows = divTeams.map(function(t, i) {
-    return "<tr><td>" + (i + 1) + "</td><td>" + t.name + "</td><td>" + t.data.wins + "-" + t.data.losses +
-      "</td><td>" + t.data.winPct + "%</td><td>" + t.data.avgScore + "</td></tr>";
-  }).join("");
+  response.answer = "Filtering the report for the <strong>" + divName + " Division</strong> (" + teams.length + " teams)." +
+    "<br><br>Teams included:" +
+    "<ul class='ai-list'>" +
+    teams.map(function(t) { return "<li>" + t + "</li>"; }).join("") +
+    "</ul>" +
+    "The report will show:" +
+    "<ul class='ai-list'>" +
+    "<li><strong>Division Win/Loss Record</strong> — W/L breakdown for the " + divName + " division</li>" +
+    "<li><strong>Total Games</strong>, <strong>Win Rate</strong>, and <strong>Avg Score</strong> aggregated across all " + teams.length + " teams</li>" +
+    "<li><strong>Games Over Time</strong> — game volume trend</li>" +
+    "<li><strong>Match Schedule</strong> — filtered to division games only</li>" +
+    "</ul>";
 
-  response.answer = "<strong>" + divName + " Division</strong> — " + div.games + " total games, " +
-    div.avgScore + " avg score this season." +
-    '<table class="ai-table"><thead><tr><th>#</th><th>Team</th><th>Record</th><th>Win%</th><th>Avg Pts</th></tr></thead>' +
-    '<tbody>' + standingsRows + '</tbody></table>';
-
-  var leader = divTeams[0];
-  response.insight = leader.name + " leads the " + divName + " Division with a " + leader.data.winPct + "% win rate. " +
-    "The division averages " + div.avgScore + " points per game.";
+  response.insight = "The Division Win/Loss Record visual will highlight how " + divName + " compares to other divisions across the league.";
 
   return response;
 }
 
-function buildLeagueRankingResponse(isBest, flags) {
-  var response = { answer: "", insight: "", filterLogic: [], measures: ["Total Games", "Win Rate", "Avg Score"], tables: ["Match by Team", "Teams"] };
+function buildPlayerQuery(playerName, parsed, intent) {
+  var response = {
+    answer: "",
+    insight: "",
+    filterLogic: [],
+    measures: ["Total Games", "Active Players"],
+    tables: ["Match by Team", "Teams", "nba_players"]
+  };
 
-  // Sort all teams
-  var allTeams = [];
-  for (var t in SEMANTIC_DATA.teams) {
-    allTeams.push({ name: t, data: SEMANTIC_DATA.teams[t] });
-  }
-
-  if (flags.isScore) {
-    allTeams.sort(function(a, b) { return isBest ? b.data.avgScore - a.data.avgScore : a.data.avgScore - b.data.avgScore; });
-  } else {
-    allTeams.sort(function(a, b) { return isBest ? b.data.winPct - a.data.winPct : a.data.winPct - b.data.winPct; });
-  }
-
-  var top5 = allTeams.slice(0, 5);
-  var label = isBest ? "Top 5" : "Bottom 5";
-  var metric = flags.isScore ? "scoring" : "win rate";
-
-  var rows = top5.map(function(t, i) {
-    return "<tr><td>" + (i + 1) + "</td><td>" + t.name + "</td><td>" + t.data.wins + "-" + t.data.losses +
-      "</td><td>" + t.data.winPct + "%</td><td>" + t.data.avgScore + "</td></tr>";
-  }).join("");
-
-  response.answer = "<strong>" + label + " Teams by " + metric + ":</strong>" +
-    '<table class="ai-table"><thead><tr><th>#</th><th>Team</th><th>Record</th><th>Win%</th><th>Avg Pts</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody></table>';
-
-  response.insight = top5[0].name + " leads the league with a " +
-    (flags.isScore ? top5[0].data.avgScore + " point average" : top5[0].data.winPct + "% win rate") + " this season.";
-
-  // No specific filter — league-wide view
   response.filterLogic.push({
-    table: "Match by Team",
-    column: "game_date",
-    operator: "between",
-    value: SEMANTIC_DATA.season.seasonStart + " to " + SEMANTIC_DATA.season.seasonEnd,
-    dax: "'Match by Team'[game_date] >= DATE(2025,10,21) && 'Match by Team'[game_date] <= DATE(2026,4,12)"
+    table: "nba_players",
+    column: "player_name",
+    operator: "=",
+    value: playerName,
+    dax: "nba_players[player_name] = \"" + playerName + "\""
   });
+
+  addDateFilter(response, parsed);
+
+  response.answer = "Filtering the report for player <strong>" + playerName + "</strong>." +
+    "<br><br>The report will show:" +
+    "<ul class='ai-list'>" +
+    "<li>Games where <strong>" + playerName + "</strong> participated</li>" +
+    "<li>Their team's performance metrics (Win Rate, Avg Score)</li>" +
+    "<li><strong>Match Schedule</strong> filtered to their games</li>" +
+    "</ul>" +
+    "<br>This filter uses the <code>nba_players</code> table which connects to <code>Teams</code> via <code>team_id</code>.";
+
+  response.insight = "Player-level filtering uses the nba_players dimension. The report shows team games associated with this player.";
 
   return response;
 }
 
-function buildLeagueOverviewResponse(parsed) {
-  var s = SEMANTIC_DATA.season;
+function buildLeagueQuery(parsed, intent) {
   var response = {
     answer: "",
     insight: "",
@@ -279,15 +228,47 @@ function buildLeagueOverviewResponse(parsed) {
     tables: ["Match by Team", "Teams", "nba_players"]
   };
 
-  response.answer = "<strong>NBA 2025-26 Season Overview</strong><br><br>" +
-    '<div class="ai-stats-grid">' +
-    '<div class="ai-stat"><span class="ai-stat-value">' + s.totalGames.toLocaleString() + '</span><span class="ai-stat-label">Total Games</span></div>' +
-    '<div class="ai-stat"><span class="ai-stat-value">' + s.winRate + '%</span><span class="ai-stat-label">Win Rate</span></div>' +
-    '<div class="ai-stat"><span class="ai-stat-value">' + s.avgScore + '</span><span class="ai-stat-label">Avg Score</span></div>' +
-    '<div class="ai-stat"><span class="ai-stat-value">' + s.totalTeams + '</span><span class="ai-stat-label">Teams</span></div>' +
-    '<div class="ai-stat"><span class="ai-stat-value">' + s.activePlayers + '</span><span class="ai-stat-label">Active Players</span></div>' +
-    '</div>';
+  addDateFilter(response, parsed);
 
+  if (intent.best || intent.worst) {
+    var direction = intent.best ? "top" : "bottom";
+    var metric = intent.score ? "scoring (Avg Score)" : "win rate (Win Rate)";
+    response.answer = "To find the <strong>" + direction + " performing teams</strong> by " + metric + ":" +
+      "<br><br>The report's <strong>Division Win/Loss Record</strong> visual shows W/L distribution across all 6 divisions. " +
+      "For team-level rankings:" +
+      "<ul class='ai-list'>" +
+      "<li>Use the <strong>Team</strong> slicer to filter individual teams</li>" +
+      "<li>The <strong>Win Rate</strong> measure: <code>" + escapeHtml(SEMANTIC_MODEL.measures["Win Rate"].expression) + "</code></li>" +
+      "<li>The <strong>Avg Score</strong> measure: <code>" + escapeHtml(SEMANTIC_MODEL.measures["Avg Score"].expression) + "</code></li>" +
+      "</ul>";
+    response.insight = "View the report with no team filter to see the Division Win/Loss Record comparing all divisions at once.";
+  } else {
+    response.answer = "<strong>NBA 2025-26 Season — Semantic Model Overview</strong>" +
+      "<br><br>The report is built on 3 tables in the Fabric semantic model:" +
+      "<ul class='ai-list'>" +
+      "<li><strong>Match by Team</strong> — " + SEMANTIC_MODEL.tables["Match by Team"].description + "</li>" +
+      "<li><strong>Teams</strong> — " + SEMANTIC_MODEL.tables["Teams"].description + "</li>" +
+      "<li><strong>nba_players</strong> — " + SEMANTIC_MODEL.tables["nba_players"].description + "</li>" +
+      "</ul>" +
+      "Key measures:" +
+      '<table class="ai-table"><thead><tr><th>Measure</th><th>DAX Expression</th></tr></thead><tbody>';
+
+    for (var m in SEMANTIC_MODEL.measures) {
+      response.answer += "<tr><td><strong>" + m + "</strong></td><td><code>" + escapeHtml(SEMANTIC_MODEL.measures[m].expression) + "</code></td></tr>";
+    }
+    response.answer += "</tbody></table>";
+
+    response.insight = "View the report with no filters to see league-wide aggregates across all 30 teams and 6 divisions.";
+  }
+
+  return response;
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function addDateFilter(response, parsed) {
   if (parsed.dateRange) {
     response.filterLogic.push({
       table: "Match by Team",
@@ -296,19 +277,7 @@ function buildLeagueOverviewResponse(parsed) {
       value: parsed.dateRange.start + " to " + parsed.dateRange.end,
       dax: "'Match by Team'[game_date] >= DATE(" + parsed.dateRange.start.replace(/-/g, ",") + ") && 'Match by Team'[game_date] <= DATE(" + parsed.dateRange.end.replace(/-/g, ",") + ")"
     });
-  } else {
-    response.filterLogic.push({
-      table: "Match by Team",
-      column: "game_date",
-      operator: "between",
-      value: s.seasonStart + " to " + s.seasonEnd,
-      dax: "'Match by Team'[game_date] >= DATE(2025,10,21) && 'Match by Team'[game_date] <= DATE(2026,4,12)"
-    });
   }
-
-  response.insight = "The NBA season is in full swing with " + s.totalGames + " games played across " + s.totalTeams + " teams and " + s.activePlayers + " active players.";
-
-  return response;
 }
 
 // ============================================================

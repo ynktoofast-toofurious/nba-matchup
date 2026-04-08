@@ -514,6 +514,18 @@ a:hover{color:var(--accent-light)}
 }
 .ai-table tr:hover td{background:rgba(0,212,170,.04)}
 
+/* AI List */
+.ai-list{
+  margin:.5rem 0 0;padding-left:1.25rem;
+  font-size:.8125rem;line-height:1.7;color:var(--text-secondary);
+}
+.ai-list li{margin-bottom:.25rem}
+.ai-list code{
+  padding:.1rem .4rem;background:rgba(0,212,170,.08);
+  border-radius:3px;font-size:.75rem;color:var(--accent);
+  font-family:var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+}
+
 .section-divider{
   display:flex;align-items:center;gap:1rem;margin:1.5rem 0;
   color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;
