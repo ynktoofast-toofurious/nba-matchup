@@ -747,6 +747,117 @@ a:hover{color:var(--accent-light)}
   border-top:1px solid var(--border);
 }
 
+/* Guide Panel: Mini AI Prompt */
+.guide-prompt{
+  padding:.75rem 1.25rem;
+  border-bottom:1px solid var(--border);
+}
+.guide-prompt-wrap{
+  display:flex;gap:.5rem;
+  align-items:center;
+}
+.guide-prompt-wrap input{
+  flex:1;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xs);
+  padding:.5rem .75rem;
+  font-family:var(--font);
+  font-size:.8125rem;
+  color:var(--text);
+  outline:none;
+  transition:border-color var(--transition);
+}
+.guide-prompt-wrap input::placeholder{color:var(--text-muted);opacity:.7}
+.guide-prompt-wrap input:focus{border-color:var(--accent)}
+.guide-prompt-btn{
+  padding:.45rem .625rem!important;
+  border-radius:var(--radius-xs)!important;
+  flex-shrink:0;
+}
+.guide-prompt-chips{
+  display:flex;flex-wrap:wrap;gap:.375rem;
+  margin-top:.5rem;
+}
+.guide-chip{
+  background:rgba(88,166,255,.08);
+  border:1px solid rgba(88,166,255,.2);
+  color:var(--accent);
+  font-family:var(--font);
+  font-size:.6875rem;
+  font-weight:600;
+  padding:.25rem .625rem;
+  border-radius:20px;
+  cursor:pointer;
+  transition:all var(--transition);
+}
+.guide-chip:hover{
+  background:rgba(88,166,255,.18);
+  border-color:var(--accent);
+}
+
+/* Guide Panel: AI Answer Section */
+.guide-ai-answer{
+  background:rgba(0,212,170,.04);
+  border:1px solid rgba(0,212,170,.15);
+  border-radius:var(--radius-sm);
+  padding:.75rem;
+  margin-bottom:.75rem;
+}
+.guide-section-title{
+  display:flex;align-items:center;gap:.375rem;
+  font-size:.75rem;font-weight:700;
+  color:var(--text-bright);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:.5rem;
+}
+.guide-ai-body{
+  font-size:.8125rem;
+  color:var(--text);
+  line-height:1.6;
+}
+.guide-ai-insight{
+  display:flex;align-items:flex-start;gap:.375rem;
+  margin-top:.5rem;
+  padding:.5rem .625rem;
+  background:rgba(240,192,0,.06);
+  border-left:3px solid rgba(240,192,0,.4);
+  border-radius:0 var(--radius-xs) var(--radius-xs) 0;
+  font-size:.75rem;
+  color:var(--text-muted);
+  line-height:1.5;
+}
+.guide-ai-insight svg{flex-shrink:0;margin-top:1px}
+.guide-visuals{
+  display:flex;flex-wrap:wrap;align-items:center;gap:.375rem;
+  margin-top:.5rem;
+}
+.guide-visuals-label{
+  font-size:.6875rem;
+  font-weight:600;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+.guide-visual-tag{
+  display:inline-flex;
+  padding:.125rem .5rem;
+  border-radius:12px;
+  font-size:.6875rem;
+  font-weight:600;
+  background:rgba(88,166,255,.1);
+  color:var(--accent);
+  border:1px solid rgba(88,166,255,.2);
+}
+
+/* Guide Panel: Loading State */
+.guide-loading{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:2rem 0;
+}
+
 .report-main{
   flex:1;display:flex;flex-direction:column;
   position:relative;

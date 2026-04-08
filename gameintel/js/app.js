@@ -3,6 +3,9 @@
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Only run filter page logic on the basketball (dashboard) page
+  if (!document.getElementById("filterDivision")) return;
+
   const user = requireAuth();
   if (!user) return;
 

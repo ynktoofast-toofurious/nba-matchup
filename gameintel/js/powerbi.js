@@ -189,94 +189,78 @@ function embedWithToken(accessToken) {
 }
 
 // ============================================================
-// Filter Guide Panel — generates step-by-step instructions
-// from the user's saved filter selections
+// Filter Guide Panel — shows AI answer + step-by-step filter
+// instructions from the user's saved selections
 // ============================================================
 
 function populateFilterGuide() {
-  var saved = sessionStorage.getItem("selectedFilters") || localStorage.getItem("selectedFilters");
   var container = document.getElementById("guideSteps");
   if (!container) return;
 
-  if (!saved) {
-    container.innerHTML =
-      '<div class="guide-empty">' +
-      '<p>No filters selected.</p>' +
-      '<p class="text-muted">Go back and use the AI prompt to set filters, then return here.</p>' +
+  // Show AI response if available
+  var aiData = sessionStorage.getItem("aiResponse") || localStorage.getItem("aiResponse");
+  var saved = sessionStorage.getItem("selectedFilters") || localStorage.getItem("selectedFilters");
+
+  var html = "";
+
+  // AI Analysis section
+  if (aiData) {
+    try {
+      var ai = JSON.parse(aiData);
+      html += '<div class="guide-ai-answer">';
+      html += '<div class="guide-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> AI Analysis</div>';
+      html += '<div class="guide-ai-body">' + ai.answer + '</div>';
+      if (ai.insight) {
+        html += '<div class="guide-ai-insight"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f0c000" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/></svg> ' + ai.insight + '</div>';
+      }
+      if (ai.suggestedVisuals && ai.suggestedVisuals.length > 0) {
+        html += '<div class="guide-visuals"><span class="guide-visuals-label">Look at:</span> ';
+        html += ai.suggestedVisuals.map(function(v) { return '<span class="guide-visual-tag">' + v + '</span>'; }).join(' ');
+        html += '</div>';
+      }
+      html += '</div>';
+    } catch (e) { /* invalid JSON */ }
+  }
+
+  // Filter steps section
+  if (saved) {
+    var filters = JSON.parse(saved);
+    var steps = [];
+    var stepNum = 1;
+
+    if (filters.division && filters.division !== "All") {
+      steps.push({ num: stepNum++, icon: "&#x1F3C0;", label: "Division", instruction: 'In the <strong>Division</strong> slicer, select <strong>' + escapeHtml(filters.division) + '</strong>' });
+    }
+    if (filters.team && filters.team !== "All") {
+      steps.push({ num: stepNum++, icon: "&#x1F455;", label: "Team", instruction: 'In the <strong>Team</strong> slicer, select <strong>' + escapeHtml(filters.team) + '</strong>' });
+    }
+    if (filters.player) {
+      steps.push({ num: stepNum++, icon: "&#x1F3C3;", label: "Player", instruction: 'In the <strong>Player</strong> slicer, search for <strong>' + escapeHtml(filters.player) + '</strong>' });
+    }
+    if (filters.dateStart && filters.dateEnd) {
+      steps.push({ num: stepNum++, icon: "&#x1F4C5;", label: "Date Range", instruction: 'Set the <strong>Date</strong> slicer from <strong>' + escapeHtml(filters.dateStart) + '</strong> to <strong>' + escapeHtml(filters.dateEnd) + '</strong>' });
+    }
+
+    if (steps.length > 0) {
+      html += '<div class="guide-section-title" style="margin-top:.75rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#388bfd" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Apply These Filters</div>';
+      html += steps.map(function(s) {
+        return '<div class="guide-step">' +
+          '<div class="step-number">' + s.num + '</div>' +
+          '<div class="step-content">' +
+          '<div class="step-label">' + s.icon + ' ' + s.label + '</div>' +
+          '<p>' + s.instruction + '</p>' +
+          '</div></div>';
+      }).join("");
+      html += '<div class="guide-step guide-step-done"><div class="step-number">&#x2713;</div><div class="step-content"><p>The report updates automatically as you apply each filter.</p></div></div>';
+    }
+  }
+
+  if (!html) {
+    html = '<div class="guide-empty">' +
+      '<p>No query yet.</p>' +
+      '<p class="text-muted">Use the AI prompt below to ask a question, or go back to set filters.</p>' +
       '</div>';
-    return;
   }
-
-  var filters = JSON.parse(saved);
-  var steps = [];
-  var stepNum = 1;
-
-  // Division step
-  if (filters.division && filters.division !== "All") {
-    steps.push({
-      num: stepNum++,
-      icon: "&#x1F3C0;",
-      label: "Division",
-      instruction: 'In the <strong>Division</strong> slicer, select <strong>' + escapeHtml(filters.division) + '</strong>'
-    });
-  }
-
-  // Team step
-  if (filters.team && filters.team !== "All") {
-    steps.push({
-      num: stepNum++,
-      icon: "&#x1F455;",
-      label: "Team",
-      instruction: 'In the <strong>Team</strong> slicer, select <strong>' + escapeHtml(filters.team) + '</strong>'
-    });
-  }
-
-  // Player step
-  if (filters.player) {
-    steps.push({
-      num: stepNum++,
-      icon: "&#x1F3C3;",
-      label: "Player",
-      instruction: 'In the <strong>Player</strong> slicer, search for <strong>' + escapeHtml(filters.player) + '</strong>'
-    });
-  }
-
-  // Date range step
-  if (filters.dateStart && filters.dateEnd) {
-    steps.push({
-      num: stepNum++,
-      icon: "&#x1F4C5;",
-      label: "Date Range",
-      instruction: 'Set the <strong>Date</strong> slicer from <strong>' + escapeHtml(filters.dateStart) + '</strong> to <strong>' + escapeHtml(filters.dateEnd) + '</strong>'
-    });
-  }
-
-  if (steps.length === 0) {
-    container.innerHTML =
-      '<div class="guide-empty">' +
-      '<p>No specific filters — showing all data.</p>' +
-      '<p class="text-muted">Use the slicers in the report to filter as needed.</p>' +
-      '</div>';
-    return;
-  }
-
-  var html = steps.map(function (s) {
-    return '<div class="guide-step">' +
-      '<div class="step-number">' + s.num + '</div>' +
-      '<div class="step-content">' +
-      '<div class="step-label">' + s.icon + ' ' + s.label + '</div>' +
-      '<p>' + s.instruction + '</p>' +
-      '</div>' +
-      '</div>';
-  }).join("");
-
-  // Add a final "done" step
-  html += '<div class="guide-step guide-step-done">' +
-    '<div class="step-number">&#x2713;</div>' +
-    '<div class="step-content">' +
-    '<p>The report will update automatically as you apply each filter.</p>' +
-    '</div>' +
-    '</div>';
 
   container.innerHTML = html;
 }
@@ -285,6 +269,55 @@ function escapeHtml(str) {
   var div = document.createElement("div");
   div.appendChild(document.createTextNode(str));
   return div.innerHTML;
+}
+
+// Handle report-page AI prompt
+function processReportPrompt() {
+  var input = document.getElementById("reportPromptInput").value.trim();
+  if (!input) return;
+
+  var container = document.getElementById("guideSteps");
+  if (!container) return;
+
+  // Show loading state
+  container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem">Analyzing...</p></div>';
+
+  setTimeout(function() {
+    try {
+      var parsed = parsePrompt(input);
+      var response = semanticQuery(input, parsed);
+
+      // Store the AI response
+      try {
+        var aiData = JSON.stringify({
+          answer: response.answer,
+          insight: response.insight,
+          suggestedVisuals: response.suggestedVisuals || [],
+          measures: response.measures,
+          filterLogic: response.filterLogic
+        });
+        sessionStorage.setItem("aiResponse", aiData);
+        localStorage.setItem("aiResponse", aiData);
+      } catch (e) { /* storage full */ }
+
+      // Store filters if entity matched
+      if (parsed.matched.length > 0) {
+        var filters = {
+          dateStart: parsed.dateRange ? parsed.dateRange.start : "2025-10-21",
+          dateEnd: parsed.dateRange ? parsed.dateRange.end : "2026-04-12",
+          division: parsed.division || "All",
+          team: parsed.team || "All",
+          player: parsed.player || ""
+        };
+        sessionStorage.setItem("selectedFilters", JSON.stringify(filters));
+        localStorage.setItem("selectedFilters", JSON.stringify(filters));
+      }
+
+      populateFilterGuide();
+    } catch (err) {
+      container.innerHTML = '<div class="guide-empty"><p style="color:var(--accent-red)">Could not understand that query.</p><p class="text-muted">Try asking about a team, player, division, or measure.</p></div>';
+    }
+  }, 400);
 }
 
 // ============================================================

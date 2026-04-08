@@ -30,15 +30,36 @@
   <!-- Report layout: guide panel + dashboard -->
   <div class="report-layout">
 
-    <!-- Left: Filter Guide Panel (25%) -->
+    <!-- Left: AI Assistant + Filter Guide Panel (25%) -->
     <aside class="filter-guide" id="filterGuide">
       <div class="guide-header">
-        <div class="guide-icon">&#x1F3AF;</div>
-        <h3>Filter Guide</h3>
-        <p class="text-muted">Follow these steps to apply your filters</p>
+        <div class="guide-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/></svg>
+        </div>
+        <h3>AI Assistant</h3>
+        <p class="text-muted">Ask questions about the data or get filter guidance</p>
       </div>
+
+      <!-- Mini AI Prompt (on report page) -->
+      <div class="guide-prompt">
+        <form onsubmit="event.preventDefault(); processReportPrompt();">
+          <div class="guide-prompt-wrap">
+            <input type="text" id="reportPromptInput" placeholder="Ask about teams, players, measures..." autocomplete="off">
+            <button type="submit" class="btn btn-primary guide-prompt-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </form>
+        <div class="guide-prompt-chips">
+          <button class="guide-chip" onclick="document.getElementById('reportPromptInput').value='What measures are available?';processReportPrompt()">Measures</button>
+          <button class="guide-chip" onclick="document.getElementById('reportPromptInput').value='List all divisions';processReportPrompt()">Divisions</button>
+          <button class="guide-chip" onclick="document.getElementById('reportPromptInput').value='What does Win Rate mean?';processReportPrompt()">Win Rate?</button>
+          <button class="guide-chip" onclick="document.getElementById('reportPromptInput').value='Tell me about the semantic model';processReportPrompt()">Data Model</button>
+        </div>
+      </div>
+
       <div class="guide-steps" id="guideSteps">
-        <!-- Steps populated by JS from saved filters -->
+        <!-- AI response + filter steps populated by JS -->
       </div>
       <div class="guide-footer">
         <a href="basketball.html" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center">
@@ -61,9 +82,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.23.1/dist/powerbi.min.js"></script>
-  <script src="js/config.js?v=20260408"></script>
-  <script src="js/users.js?v=20260408"></script>
-  <script src="js/auth.js?v=20260408"></script>
+  <script src="js/config.js?v=20260409"></script>
+  <script src="js/users.js?v=20260409"></script>
+  <script src="js/auth.js?v=20260409"></script>
+  <script src="js/semantic-ai.js?v=20260409"></script>
+  <script src="js/app.js?v=20260409"></script>
   <script src="js/powerbi.js?v=20260409"></script>
 </body>
 </html>
