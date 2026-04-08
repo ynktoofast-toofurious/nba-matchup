@@ -6,6 +6,7 @@
 // ============================================================
 
 var pbiReport = null; // global reference to the embedded report
+var publicEmbedLoaded = false; // prevent double-embed
 
 document.addEventListener("DOMContentLoaded", function () {
   var user = requireAuth();
@@ -16,11 +17,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   displayActiveFilters();
 
-  // Check if Azure AD is configured
-  if (CONFIG.auth.clientId && CONFIG.auth.clientId !== "YOUR_CLIENT_ID") {
-    authenticateAndEmbed();
+  // Check if Azure AD is configured and MSAL is available
+  if (CONFIG.auth.clientId && CONFIG.auth.clientId !== "YOUR_CLIENT_ID" && typeof msal !== "undefined") {
+    // Safety net: if auth takes more than 8 seconds, fall back to public embed
+    var authTimeout = setTimeout(function () {
+      console.warn("MSAL auth timed out — falling back to public embed");
+      embedPublicReport();
+    }, 8000);
+    authenticateAndEmbed(authTimeout);
   } else {
-    // Fallback: Publish to Web (no auth, no filters, no RLS)
     embedPublicReport();
   }
 });
@@ -44,17 +49,35 @@ function getMsalInstance() {
   return new msal.PublicClientApplication(msalConfig);
 }
 
-function authenticateAndEmbed() {
-  var msalInstance = getMsalInstance();
+function authenticateAndEmbed(authTimeout) {
+  try {
+    var msalInstance = getMsalInstance();
+  } catch (e) {
+    console.error("MSAL init failed:", e);
+    clearTimeout(authTimeout);
+    embedPublicReport();
+    return;
+  }
+
   var loginRequest = {
     scopes: CONFIG.auth.scopes,
     loginHint: CONFIG.tenant.loginHint || undefined
   };
 
-  // Try silent token acquisition first (user already signed in)
+  function onToken(accessToken) {
+    clearTimeout(authTimeout);
+    embedWithToken(accessToken);
+  }
+
+  function onFail(error) {
+    console.error("MSAL auth failed:", error);
+    clearTimeout(authTimeout);
+    embedPublicReport();
+  }
+
   msalInstance.handleRedirectPromise().then(function (response) {
     if (response) {
-      embedWithToken(response.accessToken);
+      onToken(response.accessToken);
       return;
     }
 
@@ -65,24 +88,18 @@ function authenticateAndEmbed() {
         account: accounts[0]
       };
       return msalInstance.acquireTokenSilent(silentRequest).then(function (tokenResponse) {
-        embedWithToken(tokenResponse.accessToken);
+        onToken(tokenResponse.accessToken);
       }).catch(function () {
-        // Silent failed, try popup
         return msalInstance.acquireTokenPopup(loginRequest).then(function (tokenResponse) {
-          embedWithToken(tokenResponse.accessToken);
+          onToken(tokenResponse.accessToken);
         });
       });
     } else {
-      // No accounts — trigger popup login
       return msalInstance.acquireTokenPopup(loginRequest).then(function (tokenResponse) {
-        embedWithToken(tokenResponse.accessToken);
+        onToken(tokenResponse.accessToken);
       });
     }
-  }).catch(function (error) {
-    console.error("MSAL auth failed:", error);
-    // Fallback to public embed immediately
-    embedPublicReport();
-  });
+  }).catch(onFail);
 }
 
 // ============================================================
@@ -277,6 +294,9 @@ function displayActiveFilters() {
 // ============================================================
 
 function embedPublicReport() {
+  if (publicEmbedLoaded) return; // prevent double-embed
+  publicEmbedLoaded = true;
+
   var embedContainer = document.getElementById("reportContainer");
   var loadingEl = document.getElementById("reportLoading");
 
