@@ -5,8 +5,8 @@ const CONFIG = {
   // Azure AD / Microsoft Entra ID
   auth: {
     clientId: "395122c6-d002-4a97-b407-4fab7a285372",
-    authority: "https://login.microsoftonline.com/157d5729-065c-4586-8098-4bd2c7cc32ab"
-    redirectUri: window.location.origin + "/gameintel/index.html",
+    authority: "https://login.microsoftonline.com/157d5729-065c-4586-8098-4bd2c7cc32ab",
+    redirectUri: window.location.origin + "/gameintel/gameintel/index.html",
     scopes: [
       "https://analysis.windows.net/powerbi/api/Report.Read.All",
       "https://analysis.windows.net/powerbi/api/Dataset.Read.All"

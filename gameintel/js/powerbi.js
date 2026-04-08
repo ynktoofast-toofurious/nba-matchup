@@ -80,9 +80,8 @@ function authenticateAndEmbed() {
     }
   }).catch(function (error) {
     console.error("MSAL auth failed:", error);
-    showEmbedError("Azure AD sign-in failed. Falling back to public embed.");
-    // Fallback to public embed after a brief delay
-    setTimeout(function () { embedPublicReport(); }, 1500);
+    // Fallback to public embed immediately
+    embedPublicReport();
   });
 }
 
