@@ -89,7 +89,7 @@ var KNOWN_PLAYERS = {
   "Stephen Curry": "Golden State Warriors",
   "Kevin Durant": "Phoenix Suns",
   "Giannis Antetokounmpo": "Milwaukee Bucks",
-  "Luka Doncic": "Dallas Mavericks",
+  "Luka Doncic": "Los Angeles Lakers",
   "Jayson Tatum": "Boston Celtics",
   "Joel Embiid": "Philadelphia 76ers",
   "Nikola Jokic": "Denver Nuggets",
