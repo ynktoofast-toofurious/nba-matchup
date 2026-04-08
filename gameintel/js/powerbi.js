@@ -107,6 +107,9 @@ function embedReport() {
   iframe.style.height = "100%";
   iframe.style.border = "none";
   iframe.setAttribute("allow", "fullscreen");
+  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox");
+  iframe.setAttribute("loading", "lazy");
+  iframe.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
 
   iframe.onload = function () {
     if (loadingEl) loadingEl.style.display = "none";
