@@ -75,6 +75,7 @@ function authenticateAndEmbed(authTimeout) {
     embedPublicReport();
   }
 
+  // Handle redirect response (returning from Microsoft login)
   msalInstance.handleRedirectPromise().then(function (response) {
     if (response) {
       onToken(response.accessToken);
@@ -83,6 +84,7 @@ function authenticateAndEmbed(authTimeout) {
 
     var accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
+      // Already signed in — get token silently
       var silentRequest = {
         scopes: CONFIG.auth.scopes,
         account: accounts[0]
@@ -90,14 +92,12 @@ function authenticateAndEmbed(authTimeout) {
       return msalInstance.acquireTokenSilent(silentRequest).then(function (tokenResponse) {
         onToken(tokenResponse.accessToken);
       }).catch(function () {
-        return msalInstance.acquireTokenPopup(loginRequest).then(function (tokenResponse) {
-          onToken(tokenResponse.accessToken);
-        });
+        // Silent failed — redirect to Microsoft login
+        msalInstance.acquireTokenRedirect(loginRequest);
       });
     } else {
-      return msalInstance.acquireTokenPopup(loginRequest).then(function (tokenResponse) {
-        onToken(tokenResponse.accessToken);
-      });
+      // No accounts — redirect to Microsoft login
+      msalInstance.acquireTokenRedirect(loginRequest);
     }
   }).catch(onFail);
 }
