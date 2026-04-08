@@ -94,13 +94,11 @@ function embedReport() {
     filterStr = buildFilterString(filters);
   }
 
-  // Use authenticated report URL when filters are applied (Publish to Web ignores filters)
-  // Fall back to public embed URL when no filters are set
-  var fullUrl;
+  // Always use the Publish to Web embed URL (the only URL that works in iframes)
+  // Append filter params when available — display-only; PBI may or may not apply them
+  var fullUrl = CONFIG.powerbi.publicEmbedUrl;
   if (filterStr) {
-    fullUrl = CONFIG.powerbi.reportUrl + "?" + filterStr.substring(1); // strip leading &
-  } else {
-    fullUrl = CONFIG.powerbi.publicEmbedUrl;
+    fullUrl += filterStr; // filterStr already starts with '&'
   }
 
   // Create iframe
