@@ -63,13 +63,6 @@ var GeminiAI = (function() {
       schema += "- " + div + " (" + DIVISION_CONFERENCE[div] + "): " + DIVISION_TEAMS[div].join(", ") + "\n";
     }
 
-    schema += "\nKNOWN PLAYERS:\n";
-    var playerList = [];
-    for (var p in KNOWN_PLAYERS) {
-      playerList.push(p + " → " + KNOWN_PLAYERS[p]);
-    }
-    schema += playerList.join(", ") + "\n";
-
     return schema;
   }
 
@@ -118,12 +111,13 @@ var GeminiAI = (function() {
   // Fallback prompt (no DAX, just model knowledge)
   function buildFallbackPrompt() {
     return "You are an expert NBA analytics AI assistant embedded in a Power BI dashboard called GameIntel.\n" +
-      "IMPORTANT: Answer the user's question DIRECTLY first. Give the actual answer to what they asked.\n" +
-      "Use the KNOWN PLAYERS section below to answer which team a player plays for, their division, and conference.\n" +
-      "After giving the direct answer, briefly mention which report visual or filter to use for more details.\n" +
-      "Be concise, confident, and data-driven. Use HTML tags (no markdown).\n" +
-      "Format: <strong> for emphasis, <ul><li> for lists, <code> for DAX/column names.\n" +
-      "Do NOT start with 'Looking up' or describe the semantic model structure. Just answer the question.\n\n" +
+      "IMPORTANT: You do NOT have access to live data right now. The user is not signed into Power BI.\n" +
+      "For questions about specific player rosters, team stats, win rates, or scores — tell the user you need live data access.\n" +
+      "Suggest they sign in to Power BI (via the report page) so you can query the actual semantic model with DAX.\n" +
+      "You CAN answer general questions about the data model structure, divisions, conferences, and available measures.\n" +
+      "Do NOT guess or make up player-team assignments — the dataset may differ from public knowledge.\n" +
+      "Be concise, confident. Use HTML tags (no markdown).\n" +
+      "Format: <strong> for emphasis, <ul><li> for lists, <code> for DAX/column names.\n\n" +
       "SEMANTIC MODEL:\n" + buildModelSchema();
   }
 
