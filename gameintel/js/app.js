@@ -195,7 +195,7 @@ function processPrompt() {
 
   // Use Gemini if available, otherwise fall back to offline AI
   if (typeof GeminiAI !== "undefined" && GeminiAI.isAvailable()) {
-    resultEl.innerHTML = '<span class="prompt-spinner"></span> <span class="gemini-thinking">Querying AI &amp; semantic model...</span>';
+    resultEl.innerHTML = '<span class="prompt-spinner"></span> <span class="gemini-thinking">Querying AI &amp; semantic model<span class="dot-pulse">...</span></span>';
     GeminiAI.queryStructured(input, parsed).then(function(response) {
       renderSemanticResponse(response, parsed, resultEl);
     }).catch(function(err) {

@@ -319,7 +319,7 @@ function processReportPrompt() {
 
   // Use Gemini if available, else offline engine
   if (typeof GeminiAI !== "undefined" && GeminiAI.isAvailable()) {
-    container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem"><span class="gemini-thinking">Querying AI &amp; semantic model...</span></p></div>';
+    container.innerHTML = '<div class="guide-loading"><div class="loading-spinner" style="width:24px;height:24px;border-width:2px"></div><p class="text-muted" style="font-size:.8125rem;margin-top:.5rem"><span class="gemini-thinking">Querying AI &amp; semantic model<span class="dot-pulse">...</span></span></p></div>';
     GeminiAI.queryStructured(input, parsed).then(function(response) {
       storeAndRender(response);
     }).catch(function(err) {

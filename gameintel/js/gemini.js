@@ -6,8 +6,15 @@
 
 var GeminiAI = (function() {
 
-  var API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  var MODELS = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
+  ];
+  var BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
   var STORAGE_KEY = "gemini_api_key";
+  var MAX_RETRIES = 2;
+  var RETRY_DELAY_MS = 5000; // 5 seconds between retries
 
   // ============================================================
   // System Prompts
@@ -112,12 +119,23 @@ var GeminiAI = (function() {
   }
 
   // ============================================================
-  // Gemini API Call
+  // Gemini API Call — with retry + model fallback
   // ============================================================
 
-  function callGemini(systemPrompt, userMessage, opts) {
+  function wait(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
+
+  // Extract retry delay from error message (e.g. "retry in 46.4s")
+  function parseRetryDelay(errMsg) {
+    var match = errMsg.match(/retry\s+in\s+([\d.]+)s/i);
+    if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+    return RETRY_DELAY_MS;
+  }
+
+  function callGeminiWithModel(model, systemPrompt, userMessage, opts) {
     var apiKey = getApiKey();
-    if (!apiKey) return Promise.reject(new Error("No Gemini API key configured"));
+    var url = BASE_URL + model + ":generateContent?key=" + apiKey;
 
     var config = {
       temperature: (opts && opts.temperature) || 0.7,
@@ -130,7 +148,7 @@ var GeminiAI = (function() {
       generationConfig: config
     };
 
-    return fetch(API_URL + "?key=" + apiKey, {
+    return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
@@ -139,7 +157,10 @@ var GeminiAI = (function() {
       if (!res.ok) {
         return res.json().then(function(err) {
           var msg = (err.error && err.error.message) || "API returned " + res.status;
-          throw new Error(msg);
+          var error = new Error(msg);
+          error.status = res.status;
+          error.isRateLimit = (res.status === 429 || msg.toLowerCase().indexOf("quota") !== -1);
+          throw error;
         });
       }
       return res.json();
@@ -152,6 +173,45 @@ var GeminiAI = (function() {
       if (!text) throw new Error("Empty response from Gemini");
       return text;
     });
+  }
+
+  // Try each model in order; on rate limit, wait and try next model
+  function callGemini(systemPrompt, userMessage, opts) {
+    var apiKey = getApiKey();
+    if (!apiKey) return Promise.reject(new Error("No Gemini API key configured"));
+
+    var modelIndex = 0;
+    var attempt = 0;
+
+    function tryNext(lastErr) {
+      if (modelIndex >= MODELS.length) {
+        // All models exhausted — retry from first model after delay
+        if (attempt < MAX_RETRIES) {
+          attempt++;
+          modelIndex = 0;
+          var delay = lastErr ? parseRetryDelay(lastErr.message) : RETRY_DELAY_MS;
+          console.log("[GeminiAI] All models rate-limited. Retry " + attempt + "/" + MAX_RETRIES + " in " + (delay / 1000) + "s...");
+          return wait(delay).then(function() { return tryNext(null); });
+        }
+        return Promise.reject(lastErr || new Error("All Gemini models exhausted after retries"));
+      }
+
+      var model = MODELS[modelIndex];
+      console.log("[GeminiAI] Trying model:", model, "(attempt " + (attempt + 1) + ")");
+
+      return callGeminiWithModel(model, systemPrompt, userMessage, opts)
+        .catch(function(err) {
+          if (err.isRateLimit) {
+            console.warn("[GeminiAI]", model, "rate limited:", err.message);
+            modelIndex++;
+            return tryNext(err);
+          }
+          // Non-rate-limit error — propagate immediately
+          throw err;
+        });
+    }
+
+    return tryNext(null);
   }
 
   // ============================================================
