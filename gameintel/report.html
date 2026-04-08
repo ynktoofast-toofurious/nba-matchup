@@ -27,21 +27,6 @@
     </div>
   </header>
 
-  <!-- AI Prompt Bar -->
-  <div class="report-prompt-bar">
-    <div class="container">
-      <form class="prompt-form-inline" onsubmit="event.preventDefault(); processReportPrompt();">
-        <div class="prompt-icon-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/></svg></div>
-        <input type="text" id="promptInput" placeholder='Filter with AI: "Lakers last 7 days" or "LeBron James Pacific division"' autocomplete="off">
-        <button type="submit" class="btn btn-primary" id="promptBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Generate
-        </button>
-      </form>
-      <div id="promptResult" class="prompt-result-inline" style="display:none"></div>
-    </div>
-  </div>
-
   <!-- Active filters bar -->
   <div class="filters-bar">
     <div class="container">
@@ -62,113 +47,6 @@
   <script src="js/config.js"></script>
   <script src="js/users.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/semantic-ai.js"></script>
   <script src="js/powerbi.js"></script>
-  <script>
-  // AI Prompt on report page - parses input, shows semantic answer, re-embeds
-  function processReportPrompt() {
-    var input = document.getElementById("promptInput").value.trim();
-    if (!input) return;
-    var resultEl = document.getElementById("promptResult");
-    resultEl.style.display = "block";
-    resultEl.className = "prompt-result-inline loading";
-    resultEl.innerHTML = '<span class="prompt-spinner"></span> Querying semantic model...';
-
-    setTimeout(function() {
-      var parsed = parsePromptOnReport(input);
-      if (parsed.matched.length === 0) {
-        resultEl.className = "prompt-result-inline error";
-        resultEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Could not parse. Try a team, division, player, or time range.';
-        return;
-      }
-      // Build filters object and save to session
-      var filters = JSON.parse(sessionStorage.getItem("selectedFilters") || '{}');
-      if (parsed.dateRange) { filters.dateStart = parsed.dateRange.start; filters.dateEnd = parsed.dateRange.end; }
-      if (parsed.division) filters.division = parsed.division;
-      if (parsed.team) filters.team = parsed.team;
-      if (parsed.player) filters.player = parsed.player;
-      sessionStorage.setItem("selectedFilters", JSON.stringify(filters));
-
-      // Show semantic AI response with data + filter logic
-      var semanticResponse = semanticQuery(input, parsed);
-      renderSemanticResponse(semanticResponse, parsed, resultEl);
-
-      // Re-embed report with new filters
-      reEmbedReport();
-    }, 500);
-  }
-
-  function parsePromptOnReport(input) {
-    var text = input.toLowerCase();
-    var result = { division: null, team: null, player: null, dateRange: null, matched: [] };
-    var today = new Date();
-    var fmt = function(d) { return d.toISOString().split("T")[0]; };
-
-    // Date
-    if (/\btoday\b/.test(text)) {
-      result.dateRange = { start: fmt(today), end: fmt(today) }; result.matched.push("Date: Today");
-    } else if (/\byesterday\b/.test(text)) {
-      var y = new Date(today); y.setDate(y.getDate() - 1);
-      result.dateRange = { start: fmt(y), end: fmt(y) }; result.matched.push("Date: Yesterday");
-    } else if (/\btomorrow\b/.test(text)) {
-      var t = new Date(today); t.setDate(t.getDate() + 1);
-      result.dateRange = { start: fmt(t), end: fmt(t) }; result.matched.push("Date: Tomorrow");
-    } else if (/\blast\s*(7|seven)\s*days?\b|\bpast\s*week\b|\blast\s*week\b/.test(text)) {
-      var d7 = new Date(today); d7.setDate(d7.getDate() - 7);
-      result.dateRange = { start: fmt(d7), end: fmt(today) }; result.matched.push("Date: Last 7 days");
-    } else if (/\bnext\s*(7|seven)\s*days?\b|\bnext\s*week\b/.test(text)) {
-      var n7 = new Date(today); n7.setDate(n7.getDate() + 7);
-      result.dateRange = { start: fmt(today), end: fmt(n7) }; result.matched.push("Date: Next 7 days");
-    } else if (/\blast\s*(30|thirty)\s*days?\b|\blast\s*month\b|\bpast\s*month\b/.test(text)) {
-      var d30 = new Date(today); d30.setDate(d30.getDate() - 30);
-      result.dateRange = { start: fmt(d30), end: fmt(today) }; result.matched.push("Date: Last 30 days");
-    } else if (/\bthis\s*season\b|\bfull\s*season\b/.test(text)) {
-      result.dateRange = { start: "2025-10-21", end: "2026-04-12" }; result.matched.push("Date: Full season");
-    } else if (/\bpast\b|\bhistor/.test(text)) {
-      result.dateRange = { start: "2025-10-21", end: fmt(today) }; result.matched.push("Date: Past games");
-    }
-
-    // Team
-    var allTeams = Object.values(CONFIG.teamsByDivision).flat();
-    for (var i = 0; i < allTeams.length; i++) {
-      var team = allTeams[i];
-      var parts = team.split(" ");
-      var nickname = parts[parts.length - 1].toLowerCase();
-      var city = parts.slice(0, -1).join(" ").toLowerCase();
-      if (text.indexOf(team.toLowerCase()) !== -1 || text.indexOf(nickname) !== -1 || text.indexOf(city) !== -1) {
-        result.team = team;
-        for (var div in CONFIG.teamsByDivision) {
-          if (CONFIG.teamsByDivision[div].indexOf(team) !== -1) { result.division = div; break; }
-        }
-        result.matched.push("Team: " + team);
-        break;
-      }
-    }
-
-    // Division
-    if (!result.division) {
-      for (var j = 0; j < CONFIG.divisions.length; j++) {
-        if (text.indexOf(CONFIG.divisions[j].toLowerCase()) !== -1) {
-          result.division = CONFIG.divisions[j];
-          result.matched.push("Division: " + CONFIG.divisions[j]);
-          break;
-        }
-      }
-    }
-
-    // Player
-    var nameMatch = input.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/);
-    if (nameMatch) {
-      var possibleName = nameMatch[1];
-      var isTeam = allTeams.some(function(t) { return t === possibleName; });
-      var isDiv = CONFIG.divisions.some(function(d) { return d === possibleName; });
-      if (!isTeam && !isDiv) {
-        result.player = possibleName;
-        result.matched.push("Player: " + possibleName);
-      }
-    }
-    return result;
-  }
-  </script>
 </body>
 </html>
