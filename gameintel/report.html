@@ -62,22 +62,23 @@
   <script src="js/config.js"></script>
   <script src="js/users.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/semantic-ai.js"></script>
   <script src="js/powerbi.js"></script>
   <script>
-  // AI Prompt on report page - parses input and re-embeds with new filters
+  // AI Prompt on report page - parses input, shows semantic answer, re-embeds
   function processReportPrompt() {
     var input = document.getElementById("promptInput").value.trim();
     if (!input) return;
     var resultEl = document.getElementById("promptResult");
-    resultEl.style.display = "flex";
+    resultEl.style.display = "block";
     resultEl.className = "prompt-result-inline loading";
-    resultEl.innerHTML = '<span class="prompt-spinner"></span> Analyzing...';
+    resultEl.innerHTML = '<span class="prompt-spinner"></span> Querying semantic model...';
 
     setTimeout(function() {
       var parsed = parsePromptOnReport(input);
       if (parsed.matched.length === 0) {
         resultEl.className = "prompt-result-inline error";
-        resultEl.innerHTML = '\u26A0\uFE0F Could not parse. Try a team, division, player, or time range.';
+        resultEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Could not parse. Try a team, division, player, or time range.';
         return;
       }
       // Build filters object and save to session
@@ -88,9 +89,9 @@
       if (parsed.player) filters.player = parsed.player;
       sessionStorage.setItem("selectedFilters", JSON.stringify(filters));
 
-      var chips = parsed.matched.map(function(m) { return '<span class="prompt-match-chip">' + m + '</span>'; }).join("");
-      resultEl.className = "prompt-result-inline success";
-      resultEl.innerHTML = '\u2705 ' + chips;
+      // Show semantic AI response with data + filter logic
+      var semanticResponse = semanticQuery(input, parsed);
+      renderSemanticResponse(semanticResponse, parsed, resultEl);
 
       // Re-embed report with new filters
       reEmbedReport();

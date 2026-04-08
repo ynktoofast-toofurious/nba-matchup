@@ -315,7 +315,8 @@ function showPromptResult(parsed, el) {
     return;
   }
 
-  const chips = parsed.matched.map(m => '<span class="prompt-match-chip">' + m + '</span>').join("");
-  el.className = "prompt-result success";
-  el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M20 6L9 17l-5-5"/></svg> Filters applied: ' + chips + ' <button class="btn btn-primary btn-sm" onclick="viewReport()" style="margin-left:.75rem">View Report &rarr;</button>';
+  // Use the semantic AI engine to generate a data-driven response
+  var input = document.getElementById("promptInput").value.trim();
+  var semanticResponse = semanticQuery(input, parsed);
+  renderSemanticResponse(semanticResponse, parsed, el);
 }

@@ -46,7 +46,7 @@
           <div class="prompt-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/><line x1="10" y1="20" x2="14" y2="20"/></svg></div>
           <div>
             <h3>AI Filter Assistant</h3>
-            <p class="text-muted">Describe what you want to see and filters will be set automatically</p>
+            <p class="text-muted">Ask questions about teams, divisions, or players — get answers from the semantic model with filter logic</p>
           </div>
         </div>
         <form class="prompt-form" onsubmit="event.preventDefault(); processPrompt();">
@@ -60,11 +60,12 @@
         </form>
         <div id="promptResult" class="prompt-result" style="display:none"></div>
         <div class="prompt-examples">
-          <span class="text-muted" style="font-size:.75rem">Examples:</span>
-          <button class="prompt-example-chip" onclick="fillPrompt('Boston Celtics games this season')">Boston Celtics this season</button>
-          <button class="prompt-example-chip" onclick="fillPrompt('Lakers vs all teams last 7 days')">Lakers last 7 days</button>
-          <button class="prompt-example-chip" onclick="fillPrompt('LeBron James past games')">LeBron James past games</button>
-          <button class="prompt-example-chip" onclick="fillPrompt('Southeast division yesterday')">Southeast division yesterday</button>
+          <span class="text-muted" style="font-size:.75rem">Try asking:</span>
+          <button class="prompt-example-chip" onclick="fillPrompt('How are the Lakers doing this season?')">Lakers season stats</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('Show me the Pacific division standings')">Pacific division</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('Best teams in the league by win rate')">Top teams</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('Boston Celtics home vs away record')">Celtics home/away</button>
+          <button class="prompt-example-chip" onclick="fillPrompt('LeBron James last 7 days')">LeBron last 7 days</button>
         </div>
       </div>
 
@@ -155,6 +156,7 @@
   <script src="js/config.js"></script>
   <script src="js/users.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/semantic-ai.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
