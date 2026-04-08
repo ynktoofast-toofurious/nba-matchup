@@ -94,9 +94,12 @@ function embedReport() {
     filterStr = buildFilterString(filters);
   }
 
-  // Always use the Publish to Web embed URL (the only URL that works in iframes)
-  // Note: Publish to Web does NOT support URL filter parameters — they are ignored
-  var fullUrl = CONFIG.powerbi.publicEmbedUrl;
+  // Use the authenticated report URL — supports URL filter parameters
+  // Requires user to be signed into Power BI in the same browser session
+  var fullUrl = CONFIG.powerbi.reportUrl + "?experience=power-bi";
+  if (filterStr) {
+    fullUrl += filterStr;  // &filter=Table/Column eq 'value'
+  }
 
   // Create iframe
   var iframe = document.createElement("iframe");
