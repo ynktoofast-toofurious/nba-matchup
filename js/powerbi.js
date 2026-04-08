@@ -75,6 +75,16 @@ function embedReport() {
   // Use public embed URL (Publish to Web — no auth needed)
   var fullUrl = CONFIG.powerbi.publicEmbedUrl;
 
+  // Append URL filters from saved session filters
+  var saved = sessionStorage.getItem("selectedFilters");
+  if (saved) {
+    var filters = JSON.parse(saved);
+    var filterStr = buildFilterString(filters);
+    if (filterStr) {
+      fullUrl += filterStr;
+    }
+  }
+
   // Create iframe
   var iframe = document.createElement("iframe");
   iframe.src = fullUrl;
@@ -99,6 +109,17 @@ function embedReport() {
   setTimeout(function () {
     if (loadingEl) loadingEl.style.display = "none";
   }, 5000);
+}
+
+function reEmbedReport() {
+  var embedContainer = document.getElementById("reportContainer");
+  var loadingEl = document.getElementById("reportLoading");
+  embedContainer.innerHTML = "";
+  if (loadingEl) {
+    loadingEl.style.display = "flex";
+  }
+  displayActiveFilters();
+  embedReport();
 }
 
 function showEmbedError(message) {
