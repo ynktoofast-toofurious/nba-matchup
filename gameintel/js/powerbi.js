@@ -157,7 +157,7 @@ function embedWithToken(accessToken) {
     permissions: models.Permissions.Read,
     settings: {
       panes: {
-        filters: { visible: false },
+        filters: { visible: true, expanded: false },
         pageNavigation: { visible: true }
       },
       bars: {
@@ -183,8 +183,11 @@ function embedWithToken(accessToken) {
   });
 
   pbiReport.off("rendered");
+  var filtersApplied = false;
   pbiReport.on("rendered", function () {
-    console.log("Report rendered — applying filters");
+    if (filtersApplied) return; // only apply once
+    filtersApplied = true;
+    console.log("Report rendered — applying filters now");
     applySavedFilters();
   });
 }
@@ -314,7 +317,7 @@ function reEmbedReport() {
 }
 
 function displayActiveFilters() {
-  var saved = sessionStorage.getItem("selectedFilters");
+  var saved = sessionStorage.getItem("selectedFilters") || localStorage.getItem("selectedFilters");
   if (!saved) return;
   var filters = JSON.parse(saved);
   var container = document.getElementById("activeFilters");
