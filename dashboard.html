@@ -3,24 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NBA MatchUP — Dashboard</title>
+  <title>GameIntel — Sports Intelligence Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 </head>
 <body class="dashboard-page">
 
   <!-- Top bar -->
   <header class="topbar">
     <div class="topbar-left">
-      <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-        <circle cx="32" cy="32" r="30" stroke="#e65100" stroke-width="3"/>
-        <path d="M32 2C32 2 32 62 32 62" stroke="#e65100" stroke-width="2.5"/>
-        <path d="M2 32C12 20 22 14 32 14C42 14 52 20 62 32" stroke="#e65100" stroke-width="2.5" fill="none"/>
-        <path d="M2 32C12 44 22 50 32 50C42 50 52 44 62 32" stroke="#e65100" stroke-width="2.5" fill="none"/>
-      </svg>
-      <h1 class="topbar-title">MatchUP</h1>
+      <span class="topbar-brand">GameIntel</span>
+      <nav class="topbar-nav">
+        <a href="dashboard.html" class="active">Home</a>
+        <a href="basketball.html">Basketball</a>
+      </nav>
     </div>
     <div class="topbar-right">
       <div class="user-info">
@@ -35,96 +33,129 @@
   </header>
 
   <!-- Main content -->
-  <main class="dashboard-main">
-    <div class="container">
-      <div class="dashboard-header">
-        <h2>Select Report Parameters</h2>
-        <p class="text-muted">Choose your filters below, then view the report with those parameters applied.</p>
+  <main class="homepage-main">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-badge">⚡ Multi-Sport Intelligence Platform</div>
+        <h1>One Platform.<br><span class="gradient-text">Every Sport. Smarter Insights.</span></h1>
+        <p>GameIntel brings together real-time analytics, AI-powered insights, and interactive dashboards across every major sport — all in one place.</p>
+        <div class="hero-actions">
+          <a href="basketball.html" class="btn btn-gradient btn-lg">Explore Basketball</a>
+          <a href="#sports" class="btn btn-secondary btn-lg">View All Sports</a>
+        </div>
       </div>
+    </section>
 
-      <!-- Filter Card -->
-      <div class="filter-card">
-        <!-- Date Range -->
-        <div class="filter-section">
-          <h3 class="filter-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Date Range
-          </h3>
-          <div class="date-inputs">
-            <div class="form-group">
-              <label for="filterDateStart">Start Date</label>
-              <input type="date" id="filterDateStart" value="2025-10-21">
-            </div>
-            <div class="form-group">
-              <label for="filterDateEnd">End Date</label>
-              <input type="date" id="filterDateEnd" value="2026-04-12">
-            </div>
-          </div>
-          <div class="quick-dates">
-            <button class="chip" data-range="all">Select All</button>
-            <button class="chip" data-range="next7">Next 7 Days</button>
-            <button class="chip active" data-range="past">Past</button>
-            <button class="chip" data-range="today">Today</button>
-            <button class="chip" data-range="tomorrow">Tomorrow</button>
-            <button class="chip" data-range="yesterday">Yesterday</button>
-          </div>
+    <!-- Sports Grid -->
+    <section class="sports-section" id="sports">
+      <div class="container">
+        <div class="section-header">
+          <h2>Choose Your Sport</h2>
+          <p>Dive into analytics for your favorite league</p>
         </div>
-
-        <!-- Division -->
-        <div class="filter-section">
-          <h3 class="filter-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            Division
-          </h3>
-          <div class="form-group">
-            <select id="filterDivision">
-              <option value="All">All Divisions</option>
-            </select>
+        <div class="sports-grid">
+          <a href="basketball.html" class="sport-card active-sport" style="text-decoration:none;color:inherit">
+            <div class="sport-icon">🏀</div>
+            <h3>Basketball</h3>
+            <p>NBA · 30 Teams · 1162 Games</p>
+          </a>
+          <div class="sport-card coming-soon">
+            <span class="badge-soon">Coming Soon</span>
+            <div class="sport-icon">⚽</div>
+            <h3>Soccer</h3>
+            <p>Premier League · La Liga · More</p>
           </div>
-        </div>
-
-        <!-- Team -->
-        <div class="filter-section">
-          <h3 class="filter-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Team
-          </h3>
-          <div class="form-group">
-            <select id="filterTeam">
-              <option value="All">All Teams</option>
-            </select>
+          <div class="sport-card coming-soon">
+            <span class="badge-soon">Coming Soon</span>
+            <div class="sport-icon">🏈</div>
+            <h3>Football</h3>
+            <p>NFL · 32 Teams</p>
           </div>
-        </div>
-
-        <!-- Player -->
-        <div class="filter-section">
-          <h3 class="filter-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Player
-          </h3>
-          <div class="form-group">
-            <input type="text" id="filterPlayer" placeholder="Enter player name (optional)">
+          <div class="sport-card coming-soon">
+            <span class="badge-soon">Coming Soon</span>
+            <div class="sport-icon">⚾</div>
+            <h3>Baseball</h3>
+            <p>MLB · 30 Teams</p>
+          </div>
+          <div class="sport-card coming-soon">
+            <span class="badge-soon">Coming Soon</span>
+            <div class="sport-icon">🏒</div>
+            <h3>Hockey</h3>
+            <p>NHL · 32 Teams</p>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Action buttons -->
-      <div class="filter-actions">
-        <button class="btn btn-primary btn-lg" onclick="viewReport()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          View Report
-        </button>
-        <button class="btn btn-secondary btn-lg" onclick="resetFilters()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          Reset Filters
-        </button>
+    <!-- Features -->
+    <section class="features-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Why GameIntel?</h2>
+          <p>Built for analysts, fans, and decision-makers</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon green">📊</div>
+            <h3>Interactive Dashboards</h3>
+            <p>Power BI-embedded reports with real-time filters for divisions, teams, players, and date ranges.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon blue">🤖</div>
+            <h3>AI-Powered Insights</h3>
+            <p>Machine learning models that surface trends, predict outcomes, and highlight anomalies across seasons.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon purple">🌍</div>
+            <h3>Global Coverage</h3>
+            <p>From the NBA to Premier League — a scalable platform designed to cover every major league worldwide.</p>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section class="preview-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>See It in Action</h2>
+          <p>Real-time NBA analytics dashboard with Power BI integration</p>
+        </div>
+        <div class="preview-frame">
+          <div class="preview-placeholder">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <p>Launch the <a href="basketball.html">Basketball Analytics</a> dashboard to see live reports</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 GameIntel. All rights reserved.</p>
+      </div>
+    </footer>
+
   </main>
 
-  <script src="js/config.js"></script>
   <script src="js/users.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var user = requireAuth();
+      if (!user) return;
+      var userNameEl = document.getElementById("userName");
+      var userEmailEl = document.getElementById("userEmail");
+      var userAvatarEl = document.getElementById("userAvatar");
+      if (userNameEl) userNameEl.textContent = user.name;
+      if (userEmailEl) userEmailEl.textContent = user.email;
+      if (userAvatarEl) userAvatarEl.textContent = user.name.charAt(0).toUpperCase();
+    });
+  </script>
 </body>
 </html>

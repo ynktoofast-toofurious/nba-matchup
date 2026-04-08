@@ -3,31 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NBA MatchUP — Report</title>
+  <title>GameIntel — Basketball Report</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 </head>
 <body class="report-page">
 
   <!-- Top bar -->
   <header class="topbar">
     <div class="topbar-left">
-      <a href="dashboard.html" class="back-link">
+      <a href="basketball.html" class="back-link">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </a>
-      <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-        <circle cx="32" cy="32" r="30" stroke="#e65100" stroke-width="3"/>
-        <path d="M32 2C32 2 32 62 32 62" stroke="#e65100" stroke-width="2.5"/>
-        <path d="M2 32C12 20 22 14 32 14C42 14 52 20 62 32" stroke="#e65100" stroke-width="2.5" fill="none"/>
-        <path d="M2 32C12 44 22 50 32 50C42 50 52 44 62 32" stroke="#e65100" stroke-width="2.5" fill="none"/>
-      </svg>
-      <h1 class="topbar-title">MatchUP Report</h1>
+      <a href="dashboard.html" class="topbar-brand" style="text-decoration:none">GameIntel</a>
+      <span class="topbar-title" style="opacity:.6;font-weight:500;font-size:.875rem;margin-left:.25rem">/ Basketball Report</span>
     </div>
     <div class="topbar-right">
       <span class="user-name" id="userName">User</span>
-      <a href="dashboard.html" class="btn btn-secondary">Change Filters</a>
+      <a href="basketball.html" class="btn btn-secondary">Change Filters</a>
       <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
     </div>
   </header>

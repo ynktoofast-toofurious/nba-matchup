@@ -1,0 +1,9 @@
+{
+  "name": "gameintel",
+  "short_name": "GameIntel",
+  "description": "Multi-sport intelligence platform — analytics, insights, and dashboards",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090c10",
+  "theme_color": "#00d4aa"
+}
