@@ -27,28 +27,43 @@
     </div>
   </header>
 
-  <!-- Active filters bar -->
-  <div class="filters-bar">
-    <div class="container">
-      <span class="filters-bar-label">Active Filters:</span>
-      <div id="activeFilters" class="filter-chips"></div>
-    </div>
-  </div>
+  <!-- Report layout: guide panel + dashboard -->
+  <div class="report-layout">
 
-  <!-- Report embed area -->
-  <main class="report-main">
-    <div id="reportLoading" class="report-loading">
-      <div class="loading-spinner"></div>
-      <p>Loading Power BI Report...</p>
-    </div>
-    <div id="reportContainer" class="report-embed"></div>
-  </main>
+    <!-- Left: Filter Guide Panel (25%) -->
+    <aside class="filter-guide" id="filterGuide">
+      <div class="guide-header">
+        <div class="guide-icon">&#x1F3AF;</div>
+        <h3>Filter Guide</h3>
+        <p class="text-muted">Follow these steps to apply your filters</p>
+      </div>
+      <div class="guide-steps" id="guideSteps">
+        <!-- Steps populated by JS from saved filters -->
+      </div>
+      <div class="guide-footer">
+        <a href="basketball.html" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Change Filters
+        </a>
+      </div>
+    </aside>
+
+    <!-- Right: Report embed area (75%) -->
+    <main class="report-main">
+      <div id="reportLoading" class="report-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading Power BI Report...</p>
+      </div>
+      <div id="reportContainer" class="report-embed"></div>
+    </main>
+
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.23.1/dist/powerbi.min.js"></script>
   <script src="js/config.js?v=20260408"></script>
   <script src="js/users.js?v=20260408"></script>
   <script src="js/auth.js?v=20260408"></script>
-  <script src="js/powerbi.js?v=20260408"></script>
+  <script src="js/powerbi.js?v=20260409"></script>
 </body>
 </html>

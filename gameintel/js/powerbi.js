@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var userNameEl = document.getElementById("userName");
   if (userNameEl) userNameEl.textContent = user.name;
 
-  displayActiveFilters();
+  populateFilterGuide();
 
   // Restore filters from localStorage if sessionStorage lost them (MSAL redirect)
   if (!sessionStorage.getItem("selectedFilters") && localStorage.getItem("selectedFilters")) {
@@ -157,7 +157,7 @@ function embedWithToken(accessToken) {
     permissions: models.Permissions.Read,
     settings: {
       panes: {
-        filters: { visible: true, expanded: false },
+        filters: { visible: false, expanded: false },
         pageNavigation: { visible: true }
       },
       bars: {
@@ -183,166 +183,108 @@ function embedWithToken(accessToken) {
   });
 
   pbiReport.off("rendered");
-  var filtersApplied = false;
   pbiReport.on("rendered", function () {
-    if (filtersApplied) return; // only apply once
-    filtersApplied = true;
-    console.log("Report rendered — applying filters now");
-    applySavedFilters();
+    console.log("Report rendered");
   });
 }
 
 // ============================================================
-// Programmatic Filter Application (SDK)
+// Filter Guide Panel — generates step-by-step instructions
+// from the user's saved filter selections
 // ============================================================
 
-function applySavedFilters() {
-  if (!pbiReport) return;
-
-  // Try sessionStorage first, fall back to localStorage (survives MSAL redirect)
+function populateFilterGuide() {
   var saved = sessionStorage.getItem("selectedFilters") || localStorage.getItem("selectedFilters");
+  var container = document.getElementById("guideSteps");
+  if (!container) return;
+
   if (!saved) {
-    console.log("No saved filters found");
+    container.innerHTML =
+      '<div class="guide-empty">' +
+      '<p>No filters selected.</p>' +
+      '<p class="text-muted">Go back and use the AI prompt to set filters, then return here.</p>' +
+      '</div>';
     return;
   }
 
   var filters = JSON.parse(saved);
-  var pbiFilters = buildPbiFilters(filters);
-  console.log("Applying filters:", JSON.stringify(pbiFilters));
+  var steps = [];
+  var stepNum = 1;
 
-  if (pbiFilters.length > 0) {
-    // Use page-level filters (matches "Filters on this page" in PBI filter pane)
-    pbiReport.getPages().then(function (pages) {
-      var activePage = pages.filter(function (p) { return p.isActive; })[0];
-      if (activePage) {
-        console.log("Setting filters on page: " + activePage.displayName);
-        return activePage.setFilters(pbiFilters);
-      } else {
-        console.log("No active page found, setting report-level filters");
-        return pbiReport.setFilters(pbiFilters);
-      }
-    }).then(function () {
-      console.log("Filters applied successfully");
-    }).catch(function (err) {
-      console.error("Page filter failed, trying report-level:", err);
-      pbiReport.setFilters(pbiFilters).catch(function (err2) {
-        console.error("Report-level filter also failed:", err2);
-      });
-    });
-  }
-}
-
-function buildPbiFilters(filters) {
-  var models = window["powerbi-client"].models;
-  var result = [];
-
-  // Date range filter
-  if (filters.dateStart && filters.dateEnd) {
-    result.push({
-      $schema: "http://powerbi.com/product/schema#advanced",
-      target: {
-        table: CONFIG.filters.dateRange.table,
-        column: CONFIG.filters.dateRange.column
-      },
-      filterType: models.FilterType.Advanced,
-      logicalOperator: "And",
-      conditions: [
-        { operator: "GreaterThanOrEqual", value: filters.dateStart + "T00:00:00Z" },
-        { operator: "LessThanOrEqual", value: filters.dateEnd + "T23:59:59Z" }
-      ]
-    });
-  }
-
-  // Team filter
-  if (filters.team && filters.team !== "All") {
-    result.push({
-      $schema: "http://powerbi.com/product/schema#basic",
-      target: {
-        table: CONFIG.filters.team.table,
-        column: CONFIG.filters.team.column
-      },
-      filterType: models.FilterType.Basic,
-      operator: "In",
-      values: [filters.team]
-    });
-  }
-
-  // Division filter
+  // Division step
   if (filters.division && filters.division !== "All") {
-    result.push({
-      $schema: "http://powerbi.com/product/schema#basic",
-      target: {
-        table: CONFIG.filters.division.table,
-        column: CONFIG.filters.division.column
-      },
-      filterType: models.FilterType.Basic,
-      operator: "In",
-      values: [filters.division]
+    steps.push({
+      num: stepNum++,
+      icon: "&#x1F3C0;",
+      label: "Division",
+      instruction: 'In the <strong>Division</strong> slicer, select <strong>' + escapeHtml(filters.division) + '</strong>'
     });
   }
 
-  // Player filter (uses AdvancedFilter for "Contains" operator)
-  if (filters.player) {
-    result.push({
-      $schema: "http://powerbi.com/product/schema#advanced",
-      target: {
-        table: CONFIG.filters.player.table,
-        column: CONFIG.filters.player.column
-      },
-      filterType: models.FilterType.Advanced,
-      logicalOperator: "And",
-      conditions: [
-        { operator: "Contains", value: filters.player }
-      ]
-    });
-  }
-
-  return result;
-}
-
-// Apply new filters to an already-embedded report
-function reEmbedReport() {
-  displayActiveFilters();
-  if (pbiReport) {
-    // SDK: just update filters, no need to re-embed
-    applySavedFilters();
-  } else {
-    // Fallback: re-embed iframe
-    var embedContainer = document.getElementById("reportContainer");
-    var loadingEl = document.getElementById("reportLoading");
-    embedContainer.innerHTML = "";
-    if (loadingEl) loadingEl.style.display = "flex";
-    embedPublicReport();
-  }
-}
-
-function displayActiveFilters() {
-  var saved = sessionStorage.getItem("selectedFilters") || localStorage.getItem("selectedFilters");
-  if (!saved) return;
-  var filters = JSON.parse(saved);
-  var container = document.getElementById("activeFilters");
-  if (!container) return;
-
-  var chips = [];
-  if (filters.dateStart && filters.dateEnd) {
-    chips.push("\u{1F4C5} " + filters.dateStart + " \u2192 " + filters.dateEnd);
-  }
-  if (filters.division && filters.division !== "All") {
-    chips.push("\u{1F3C0} " + filters.division);
-  }
+  // Team step
   if (filters.team && filters.team !== "All") {
-    chips.push("\u{1F455} " + filters.team);
-  }
-  if (filters.player) {
-    chips.push("\u{1F3C3} " + filters.player);
-  }
-  if (chips.length === 0) {
-    chips.push("All data (no filters)");
+    steps.push({
+      num: stepNum++,
+      icon: "&#x1F455;",
+      label: "Team",
+      instruction: 'In the <strong>Team</strong> slicer, select <strong>' + escapeHtml(filters.team) + '</strong>'
+    });
   }
 
-  container.innerHTML = chips.map(function (c) {
-    return '<span class="filter-chip">' + c + '</span>';
+  // Player step
+  if (filters.player) {
+    steps.push({
+      num: stepNum++,
+      icon: "&#x1F3C3;",
+      label: "Player",
+      instruction: 'In the <strong>Player</strong> slicer, search for <strong>' + escapeHtml(filters.player) + '</strong>'
+    });
+  }
+
+  // Date range step
+  if (filters.dateStart && filters.dateEnd) {
+    steps.push({
+      num: stepNum++,
+      icon: "&#x1F4C5;",
+      label: "Date Range",
+      instruction: 'Set the <strong>Date</strong> slicer from <strong>' + escapeHtml(filters.dateStart) + '</strong> to <strong>' + escapeHtml(filters.dateEnd) + '</strong>'
+    });
+  }
+
+  if (steps.length === 0) {
+    container.innerHTML =
+      '<div class="guide-empty">' +
+      '<p>No specific filters — showing all data.</p>' +
+      '<p class="text-muted">Use the slicers in the report to filter as needed.</p>' +
+      '</div>';
+    return;
+  }
+
+  var html = steps.map(function (s) {
+    return '<div class="guide-step">' +
+      '<div class="step-number">' + s.num + '</div>' +
+      '<div class="step-content">' +
+      '<div class="step-label">' + s.icon + ' ' + s.label + '</div>' +
+      '<p>' + s.instruction + '</p>' +
+      '</div>' +
+      '</div>';
   }).join("");
+
+  // Add a final "done" step
+  html += '<div class="guide-step guide-step-done">' +
+    '<div class="step-number">&#x2713;</div>' +
+    '<div class="step-content">' +
+    '<p>The report will update automatically as you apply each filter.</p>' +
+    '</div>' +
+    '</div>';
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
 }
 
 // ============================================================
