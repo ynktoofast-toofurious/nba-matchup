@@ -348,8 +348,23 @@ var GeminiAI = (function() {
       console.log("[GeminiAI] Starting query pipeline. PBI token:", hasToken ? "YES" : "NO", "API key:", isAvailable() ? "YES" : "NO");
 
       if (!hasToken) {
-        console.log("[GeminiAI] No PBI token — using Gemini model knowledge only");
-        return queryWithModelKnowledge(userMessage, parsed);
+        console.log("[GeminiAI] No PBI token — prompting user to sign in");
+        return Promise.resolve({
+          answer: '<p>To answer questions about players, teams, and stats, I need access to the <strong>live Power BI data</strong>.</p>' +
+            '<p style="margin-top:.75rem">' +
+            (typeof signInForLiveData === "function"
+              ? '<button class="btn btn-primary btn-sm" onclick="signInForLiveData()" style="font-size:.8rem;padding:.35rem 1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg> Sign in with Microsoft</button>'
+              : 'Please <a href="report.html" style="color:var(--accent-green);text-decoration:underline">go to the Report page</a> and sign in with Microsoft first.') +
+            '</p>' +
+            '<p class="text-muted" style="margin-top:.5rem;font-size:.8rem">This connects to the Power BI semantic model so I can query real NBA data via DAX.</p>',
+          insight: null,
+          suggestedVisuals: ["KPI Cards"],
+          measures: [],
+          tables: [],
+          filterLogic: [],
+          daxQuery: null,
+          source: "no-token"
+        });
       }
 
       // Step 1: Ask Gemini to generate a DAX query

@@ -169,8 +169,11 @@
   <script src="js/gemini.js"></script>
   <script src="js/app.js"></script>
   <script>
-    // Acquire a Power BI token so the AI can run DAX queries
+    // Acquire a Power BI token so the AI can run DAX queries (silent only — no redirect)
     var _bbMsalInstance = null;
+    function signInForLiveData() {
+      if (_bbMsalInstance) _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes, loginHint: CONFIG.tenant.loginHint || undefined });
+    }
     (function() {
       if (!CONFIG.auth.clientId || CONFIG.auth.clientId === "YOUR_CLIENT_ID" || typeof msal === "undefined") return;
       try {
@@ -187,12 +190,8 @@
               console.log("[Basketball] PBI token acquired silently — AI can query live data");
               if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators();
             }).catch(function(e) {
-              console.log("[Basketball] Silent token failed, redirecting to sign in...");
-              _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes });
+              console.log("[Basketball] Silent token failed — user can click Sign In for live data");
             });
-          } else {
-            console.log("[Basketball] No MSAL accounts, redirecting to sign in...");
-            _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes, loginHint: CONFIG.tenant.loginHint || undefined });
           }
         }).catch(function(e) { console.log("[Basketball] MSAL init error:", e.message); });
       } catch(e) { console.log("[Basketball] MSAL not available:", e.message); }
