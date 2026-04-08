@@ -102,11 +102,12 @@ var GeminiAI = (function() {
   // Fallback prompt (no DAX, just model knowledge)
   function buildFallbackPrompt() {
     return "You are an expert NBA analytics AI assistant embedded in a Power BI dashboard called GameIntel.\n" +
-      "You answer questions about NBA basketball data using the semantic model below.\n" +
+      "IMPORTANT: Answer the user's question DIRECTLY first. Give the actual answer to what they asked.\n" +
+      "Use the KNOWN PLAYERS section below to answer which team a player plays for, their division, and conference.\n" +
+      "After giving the direct answer, briefly mention which report visual or filter to use for more details.\n" +
       "Be concise, confident, and data-driven. Use HTML tags (no markdown).\n" +
-      "When referencing measures, explain the DAX formula. When referencing visuals, tell the user which visual to look at.\n" +
-      "Always tell the user what filters to apply in the report slicers if relevant.\n" +
-      "Format lists with <ul><li>. Use <strong> for emphasis. Use <code> for DAX/column names.\n\n" +
+      "Format: <strong> for emphasis, <ul><li> for lists, <code> for DAX/column names.\n" +
+      "Do NOT start with 'Looking up' or describe the semantic model structure. Just answer the question.\n\n" +
       "SEMANTIC MODEL:\n" + buildModelSchema();
   }
 
@@ -227,51 +228,55 @@ var GeminiAI = (function() {
 
   // Full pipeline: Question → DAX → Execute → Interpret
   function queryStructured(userMessage, parsed) {
-    var hasToken = (typeof pbiAccessToken !== "undefined") && !!pbiAccessToken;
+    try {
+      var hasToken = (typeof pbiAccessToken !== "undefined") && !!pbiAccessToken;
 
-    if (!hasToken) {
-      // No PBI token — skip DAX execution, use Gemini with model knowledge only
-      return queryWithModelKnowledge(userMessage, parsed);
-    }
-
-    // Step 1: Ask Gemini to generate a DAX query
-    return callGemini(buildDaxPrompt(), userMessage, { temperature: 0.2, maxTokens: 512 })
-      .then(function(daxResponse) {
-        var dax = daxResponse.trim().replace(/^```[\s\S]*?\n/, "").replace(/```$/, "").trim();
-
-        // If Gemini says no DAX needed (metadata / conversational question)
-        if (dax === "NO_DAX_NEEDED" || dax.indexOf("EVALUATE") === -1) {
-          return queryWithModelKnowledge(userMessage, parsed);
-        }
-
-        console.log("[GeminiAI] Generated DAX:", dax);
-
-        // Step 2: Execute the DAX query against Power BI
-        return executeDAX(dax)
-          .then(function(rows) {
-            console.log("[GeminiAI] DAX returned", rows.length, "rows");
-            var resultText = formatResults(rows);
-
-            // Step 3: Send results back to Gemini for interpretation
-            var interpretPrompt = "USER QUESTION: " + userMessage + "\n\n" +
-              "DAX QUERY EXECUTED:\n" + dax + "\n\n" +
-              "LIVE DATA RESULTS:\n" + resultText;
-
-            return callGemini(buildAnswerPrompt(), interpretPrompt, { temperature: 0.7, maxTokens: 1200 });
-          })
-          .then(function(answer) {
-            return buildStructuredResponse(answer, parsed, dax, "gemini-live");
-          })
-          .catch(function(daxErr) {
-            console.warn("[GeminiAI] DAX execution failed:", daxErr.message);
-            // Fall back to model-knowledge-only answer
-            return queryWithModelKnowledge(userMessage, parsed);
-          });
-      })
-      .catch(function(err) {
-        console.warn("[GeminiAI] DAX generation failed:", err.message);
+      if (!hasToken) {
+        // No PBI token — skip DAX execution, use Gemini with model knowledge only
         return queryWithModelKnowledge(userMessage, parsed);
-      });
+      }
+
+      // Step 1: Ask Gemini to generate a DAX query
+      return callGemini(buildDaxPrompt(), userMessage, { temperature: 0.2, maxTokens: 512 })
+        .then(function(daxResponse) {
+          var dax = daxResponse.trim().replace(/^```[\s\S]*?\n/, "").replace(/```$/, "").trim();
+
+          // If Gemini says no DAX needed (metadata / conversational question)
+          if (dax === "NO_DAX_NEEDED" || dax.indexOf("EVALUATE") === -1) {
+            return queryWithModelKnowledge(userMessage, parsed);
+          }
+
+          console.log("[GeminiAI] Generated DAX:", dax);
+
+          // Step 2: Execute the DAX query against Power BI
+          return executeDAX(dax)
+            .then(function(rows) {
+              console.log("[GeminiAI] DAX returned", rows.length, "rows");
+              var resultText = formatResults(rows);
+
+              // Step 3: Send results back to Gemini for interpretation
+              var interpretPrompt = "USER QUESTION: " + userMessage + "\n\n" +
+                "DAX QUERY EXECUTED:\n" + dax + "\n\n" +
+                "LIVE DATA RESULTS:\n" + resultText;
+
+              return callGemini(buildAnswerPrompt(), interpretPrompt, { temperature: 0.7, maxTokens: 1200 });
+            })
+            .then(function(answer) {
+              return buildStructuredResponse(answer, parsed, dax, "gemini-live");
+            })
+            .catch(function(daxErr) {
+              console.warn("[GeminiAI] DAX execution failed:", daxErr.message);
+              return queryWithModelKnowledge(userMessage, parsed);
+            });
+        })
+        .catch(function(err) {
+          console.warn("[GeminiAI] DAX generation failed:", err.message);
+          return queryWithModelKnowledge(userMessage, parsed);
+        });
+    } catch (syncErr) {
+      console.error("[GeminiAI] Sync error in queryStructured:", syncErr);
+      return Promise.reject(syncErr);
+    }
   }
 
   // Fallback: Answer using model knowledge only (no live data)

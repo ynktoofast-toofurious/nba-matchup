@@ -290,7 +290,16 @@ function answerTeamQuestion(teamName, ctx) {
 }
 
 function answerPlayerQuestion(playerName, ctx) {
-  var knownTeam = KNOWN_PLAYERS[playerName] || null;
+  // Case-insensitive KNOWN_PLAYERS lookup
+  var knownTeam = null;
+  var knownKeys = Object.keys(KNOWN_PLAYERS);
+  for (var ki = 0; ki < knownKeys.length; ki++) {
+    if (knownKeys[ki].toLowerCase() === playerName.toLowerCase()) {
+      knownTeam = KNOWN_PLAYERS[knownKeys[ki]];
+      playerName = knownKeys[ki]; // normalize casing
+      break;
+    }
+  }
   var intent = ctx.intent;
 
   var r = makeResponse(["Match by Team", "Teams", "nba_players"]);
@@ -298,18 +307,19 @@ function answerPlayerQuestion(playerName, ctx) {
   addDateFilter(r, ctx.parsed);
   r.measures = ["Total Games", "Active Players", "Win Rate", "Avg Score"];
 
-  var teamInfo = "";
+  // Lead with the direct answer
   if (knownTeam) {
     var div = findTeamDivision(knownTeam);
-    teamInfo = "<br><br><strong>" + playerName + "</strong> plays for the <strong>" + knownTeam + "</strong>" +
+    r.answer = "<strong>" + playerName + "</strong> plays for the <strong>" + knownTeam + "</strong>" +
       (div ? " (" + div + " Division, " + DIVISION_CONFERENCE[div] + " Conference)" : "") + ".";
+  } else {
+    r.answer = "<strong>" + playerName + "</strong> was found in the query.";
   }
 
-  r.answer = "Looking up <strong>" + playerName + "</strong> in the semantic model:" + teamInfo +
-    "<br><br>The report connects players to games through: <code>nba_players[team_id]</code> → <code>Teams[team_id]</code> → <code>Match by Team[home_team]</code>." +
-    "<br><br>When you filter to this player, the report shows:" +
+  // Add report guidance
+  r.answer += "<br><br>In the report, filtering to this player shows:" +
     "<ul class='ai-list'>" +
-    "<li><strong>Their team's games</strong> — all matches the team played</li>" +
+    (knownTeam ? "<li><strong>" + knownTeam + "'s games</strong> — all matches the team played</li>" : "<li><strong>Their team's games</strong> — all matches the team played</li>") +
     "<li><strong>Win Rate</strong> — team's W/L percentage during the filtered period</li>" +
     "<li><strong>Avg Score</strong> — team's scoring average</li>" +
     "<li><strong>Match Schedule</strong> — individual game results</li>" +
@@ -320,7 +330,7 @@ function answerPlayerQuestion(playerName, ctx) {
       "The Avg Score measure shows the team's scoring when " + playerName + " is on the roster.";
     r.insight = "Individual player stats (PPG, rebounds, assists) aren't in this model yet. The data shows team games associated with " + playerName + ".";
   } else {
-    r.insight = "The nba_players table links players to teams. " + (knownTeam ? "Filtering to " + playerName + " will show " + knownTeam + "'s game data." : "Select this player in the Player slicer.");
+    r.insight = knownTeam ? playerName + " plays for " + knownTeam + ". Select this player in the Player slicer to see their team's stats." : "Select this player in the Player slicer.";
   }
 
   r.suggestedVisuals = ["KPI Cards", "Match Schedule", "Home vs Away"];

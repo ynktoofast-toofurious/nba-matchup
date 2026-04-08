@@ -199,7 +199,7 @@ function processPrompt() {
     GeminiAI.queryStructured(input, parsed).then(function(response) {
       renderSemanticResponse(response, parsed, resultEl);
     }).catch(function(err) {
-      console.warn("Gemini error, falling back to offline:", err.message);
+      console.error("[GeminiAI] Failed:", err.message, err.stack || "");
       var semanticResponse = semanticQuery(input, parsed);
       renderSemanticResponse(semanticResponse, parsed, resultEl);
     });
@@ -301,8 +301,17 @@ function parsePrompt(input) {
     const isTeam = allTeams.some(t => t === possibleName);
     const isDiv = CONFIG.divisions.some(d => d === possibleName);
     if (!isTeam && !isDiv) {
-      result.player = possibleName;
-      result.matched.push("Player: " + possibleName);
+      // Normalize to KNOWN_PLAYERS key casing if we have a match
+      var resolvedPlayer = possibleName;
+      var knownKeys = Object.keys(KNOWN_PLAYERS);
+      for (var ki = 0; ki < knownKeys.length; ki++) {
+        if (knownKeys[ki].toLowerCase() === possibleName.toLowerCase()) {
+          resolvedPlayer = knownKeys[ki];
+          break;
+        }
+      }
+      result.player = resolvedPlayer;
+      result.matched.push("Player: " + resolvedPlayer);
     }
   }
 
