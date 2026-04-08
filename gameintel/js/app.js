@@ -184,11 +184,16 @@ function processPrompt() {
   resultEl.className = "prompt-result loading";
   resultEl.innerHTML = '<span class="prompt-spinner"></span> Analyzing your request...';
 
-  // Simulate a brief processing delay for UX
   setTimeout(() => {
-    const parsed = parsePrompt(input);
-    applyParsedFilters(parsed);
-    showPromptResult(parsed, resultEl);
+    try {
+      const parsed = parsePrompt(input);
+      applyParsedFilters(parsed);
+      showPromptResult(parsed, resultEl);
+    } catch (err) {
+      console.error("Prompt processing error:", err);
+      resultEl.className = "prompt-result error";
+      resultEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Error: ' + err.message;
+    }
   }, 600);
 }
 
