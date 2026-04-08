@@ -962,6 +962,10 @@ a:hover{color:var(--accent-light)}
   background:rgba(88,166,255,.1);
   color:var(--accent);
 }
+.ai-source-label.gemini-live{
+  background:rgba(63,185,80,.12);
+  color:#3fb950;
+}
 .ai-source-label.offline{
   background:rgba(139,148,158,.08);
   color:var(--text-muted);
@@ -1045,6 +1049,33 @@ a:hover{color:var(--accent-light)}
   margin-top:.75rem;
 }
 .gemini-help a{font-size:.75rem}
+.gemini-divider{
+  border-top:1px solid var(--border);
+  margin:1rem 0;
+}
+.guide-dax-details{
+  margin-top:.5rem;
+  font-size:.75rem;
+}
+.guide-dax-details summary{
+  cursor:pointer;
+  color:var(--text-muted);
+  font-size:.7rem;
+  letter-spacing:.02em;
+}
+.guide-dax-code{
+  background:rgba(0,0,0,.3);
+  border:1px solid var(--border);
+  border-radius:.375rem;
+  padding:.5rem .75rem;
+  margin-top:.35rem;
+  font-family:'Fira Code','Cascadia Code',monospace;
+  font-size:.7rem;
+  color:#c9d1d9;
+  white-space:pre-wrap;
+  word-break:break-all;
+  overflow-x:auto;
+}
 .gemini-modal-footer{
   display:flex;justify-content:flex-end;gap:.5rem;
   padding:1rem 1.5rem;

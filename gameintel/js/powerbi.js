@@ -7,6 +7,7 @@
 
 var pbiReport = null; // global reference to the embedded report
 var publicEmbedLoaded = false; // prevent double-embed
+var pbiAccessToken = null; // MSAL token for DAX query execution
 
 document.addEventListener("DOMContentLoaded", function () {
   var user = requireAuth();
@@ -141,6 +142,7 @@ function showSignInPrompt(msalInstance, loginRequest) {
 // ============================================================
 
 function embedWithToken(accessToken) {
+  pbiAccessToken = accessToken; // store globally for DAX queries
   var models = window["powerbi-client"].models;
   var embedContainer = document.getElementById("reportContainer");
   var loadingEl = document.getElementById("reportLoading");
@@ -207,13 +209,16 @@ function populateFilterGuide() {
   if (aiData) {
     try {
       var ai = JSON.parse(aiData);
-      var srcClass = ai.source === "gemini" ? "gemini" : "offline";
-      var srcLabel = ai.source === "gemini" ? "Gemini" : "Offline AI";
+      var srcClass = ai.source === "gemini-live" ? "gemini-live" : (ai.source === "gemini" ? "gemini" : "offline");
+      var srcLabel = ai.source === "gemini-live" ? "Gemini Live" : (ai.source === "gemini" ? "Gemini" : "Offline AI");
       html += '<div class="guide-ai-answer">';
       html += '<div class="guide-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> AI Analysis <span class="ai-source-label ' + srcClass + '">' + srcLabel + '</span></div>';
       html += '<div class="guide-ai-body">' + ai.answer + '</div>';
       if (ai.insight) {
         html += '<div class="guide-ai-insight"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f0c000" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/></svg> ' + ai.insight + '</div>';
+      }
+      if (ai.daxQuery) {
+        html += '<details class="guide-dax-details"><summary>View DAX Query</summary><pre class="guide-dax-code">' + escapeHtml(ai.daxQuery) + '</pre></details>';
       }
       if (ai.suggestedVisuals && ai.suggestedVisuals.length > 0) {
         html += '<div class="guide-visuals"><span class="guide-visuals-label">Look at:</span> ';
@@ -291,6 +296,7 @@ function processReportPrompt() {
         suggestedVisuals: response.suggestedVisuals || [],
         measures: response.measures,
         filterLogic: response.filterLogic,
+        daxQuery: response.daxQuery || null,
         source: response.source || "offline"
       });
       sessionStorage.setItem("aiResponse", aiData);
