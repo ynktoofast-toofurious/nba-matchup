@@ -4,8 +4,8 @@
 const CONFIG = {
   // Azure AD / Microsoft Entra ID
   auth: {
-    clientId: "YOUR_CLIENT_ID",            // Application (client) ID from Azure AD app registration
-    authority: "https://login.microsoftonline.com/YOUR_TENANT_ID", // Replace YOUR_TENANT_ID
+    clientId: "395122c6-d002-4a97-b407-4fab7a285372",
+    authority: "https://login.microsoftonline.com/157d5729-065c-4586-8098-4bd2c7cc32ab"
     redirectUri: window.location.origin + "/gameintel/index.html",
     scopes: [
       "https://analysis.windows.net/powerbi/api/Report.Read.All",
