@@ -160,42 +160,11 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
-  <script>var pbiAccessToken = null;</script>
   <script src="js/config.js"></script>
   <script src="js/users.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/semantic-ai.js"></script>
   <script src="js/gemini.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    // Acquire a Power BI token so the AI can run DAX queries (silent only — no redirect)
-    var _bbMsalInstance = null;
-    function signInForLiveData() {
-      if (_bbMsalInstance) _bbMsalInstance.acquireTokenRedirect({ scopes: CONFIG.auth.scopes, loginHint: CONFIG.tenant.loginHint || undefined });
-    }
-    (function() {
-      if (!CONFIG.auth.clientId || CONFIG.auth.clientId === "YOUR_CLIENT_ID" || typeof msal === "undefined") return;
-      try {
-        _bbMsalInstance = new msal.PublicClientApplication({
-          auth: { clientId: CONFIG.auth.clientId, authority: CONFIG.auth.authority, redirectUri: CONFIG.auth.redirectUri },
-          cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
-        });
-        _bbMsalInstance.handleRedirectPromise().then(function(response) {
-          if (response) { pbiAccessToken = response.accessToken; if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators(); return; }
-          var accounts = _bbMsalInstance.getAllAccounts();
-          if (accounts.length > 0) {
-            _bbMsalInstance.acquireTokenSilent({ scopes: CONFIG.auth.scopes, account: accounts[0] }).then(function(tokenResponse) {
-              pbiAccessToken = tokenResponse.accessToken;
-              console.log("[Basketball] PBI token acquired silently — AI can query live data");
-              if (typeof GeminiAI !== "undefined") GeminiAI.updateGeminiIndicators();
-            }).catch(function(e) {
-              console.log("[Basketball] Silent token failed — user can click Sign In for live data");
-            });
-          }
-        }).catch(function(e) { console.log("[Basketball] MSAL init error:", e.message); });
-      } catch(e) { console.log("[Basketball] MSAL not available:", e.message); }
-    })();
-  </script>
 </body>
 </html>

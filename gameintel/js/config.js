@@ -2,6 +2,11 @@
 // Configuration — Fill in your Azure AD + Power BI details
 // ============================================================
 const CONFIG = {
+  // Vercel Backend API
+  api: {
+    daxEndpoint: "https://gameintel-api.vercel.app/api/dax"
+  },
+
   // Azure AD / Microsoft Entra ID
   auth: {
     clientId: "395122c6-d002-4a97-b407-4fab7a285372",

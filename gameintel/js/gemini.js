@@ -272,45 +272,34 @@ var GeminiAI = (function() {
   // Power BI DAX Query Execution
   // ============================================================
 
+  // ============================================================
+  // DAX Execution via Vercel Backend
+  // ============================================================
+
+  var DAX_API_URL = (typeof CONFIG !== "undefined" && CONFIG.api && CONFIG.api.daxEndpoint)
+    ? CONFIG.api.daxEndpoint
+    : "https://gameintel-api.vercel.app/api/dax";
+
   function executeDAX(daxQuery) {
-    var token = (typeof pbiAccessToken !== "undefined") ? pbiAccessToken : null;
-    if (!token) {
-      return Promise.reject(new Error("NO_TOKEN"));
-    }
-
-    var datasetId = CONFIG.powerbi.datasetId || CONFIG.powerbi.reportId;
-    var url = "https://api.powerbi.com/v1.0/myorg/groups/" +
-      CONFIG.powerbi.groupId + "/datasets/" +
-      datasetId + "/executeQueries";
-
-    var body = {
-      queries: [{ query: daxQuery }],
-      serializerSettings: { includeNulls: true }
-    };
-
-    return fetch(url, {
+    return fetch(DAX_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify(body)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: daxQuery })
     })
     .then(function(res) {
       if (!res.ok) {
-        return res.text().then(function(t) {
-          throw new Error("DAX execution failed (" + res.status + "): " + t.slice(0, 200));
+        return res.json().then(function(data) {
+          throw new Error(data.error || "DAX execution failed (" + res.status + ")");
+        }).catch(function(parseErr) {
+          if (parseErr.message.indexOf("DAX") !== -1) throw parseErr;
+          throw new Error("DAX execution failed (" + res.status + ")");
         });
       }
       return res.json();
     })
     .then(function(data) {
-      if (data.error) throw new Error("DAX error: " + (data.error.message || JSON.stringify(data.error)));
-      // Extract rows from result
-      if (data.results && data.results[0] && data.results[0].tables && data.results[0].tables[0]) {
-        return data.results[0].tables[0].rows || [];
-      }
-      return [];
+      if (data.error) throw new Error("DAX error: " + data.error);
+      return data.rows || [];
     });
   }
 
@@ -344,30 +333,9 @@ var GeminiAI = (function() {
   // Full pipeline: Question → DAX → Execute → Interpret
   function queryStructured(userMessage, parsed) {
     try {
-      var hasToken = (typeof pbiAccessToken !== "undefined") && !!pbiAccessToken;
-      console.log("[GeminiAI] Starting query pipeline. PBI token:", hasToken ? "YES" : "NO", "API key:", isAvailable() ? "YES" : "NO");
+      console.log("[GeminiAI] Starting query pipeline. API key:", isAvailable() ? "YES" : "NO", "Backend:", DAX_API_URL);
 
-      if (!hasToken) {
-        console.log("[GeminiAI] No PBI token — prompting user to sign in");
-        return Promise.resolve({
-          answer: '<p>To answer questions about players, teams, and stats, I need access to the <strong>live Power BI data</strong>.</p>' +
-            '<p style="margin-top:.75rem">' +
-            (typeof signInForLiveData === "function"
-              ? '<button class="btn btn-primary btn-sm" onclick="signInForLiveData()" style="font-size:.8rem;padding:.35rem 1rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg> Sign in with Microsoft</button>'
-              : 'Please <a href="report.html" style="color:var(--accent-green);text-decoration:underline">go to the Report page</a> and sign in with Microsoft first.') +
-            '</p>' +
-            '<p class="text-muted" style="margin-top:.5rem;font-size:.8rem">This connects to the Power BI semantic model so I can query real NBA data via DAX.</p>',
-          insight: null,
-          suggestedVisuals: ["KPI Cards"],
-          measures: [],
-          tables: [],
-          filterLogic: [],
-          daxQuery: null,
-          source: "no-token"
-        });
-      }
-
-      // Step 1: Ask Gemini to generate a DAX query
+      // Step 1: Ask AI to generate a DAX query
       console.log("[GeminiAI] Step 1: Asking AI to generate DAX...");
       return callAI(buildDaxPrompt(), userMessage, { temperature: 0.2, maxTokens: 512 })
         .then(function(daxResponse) {
@@ -531,7 +499,6 @@ var GeminiAI = (function() {
     var groqKey = getGroqKey();
     var groqModel = getGroqModel();
     var curProvider = getProvider();
-    var hasToken = (typeof pbiAccessToken !== "undefined") && !!pbiAccessToken;
 
     var groqModelOpts = GROQ_MODELS.map(function(m) {
       return '<option value="' + m.id + '"' + (groqModel === m.id ? ' selected' : '') + '>' + m.label + '</option>';
@@ -582,9 +549,9 @@ var GeminiAI = (function() {
 
           '<div class="gemini-divider"></div>' +
 
-          // Live data status
-          '<label class="gemini-label">Live Data Access</label>' +
-          (hasToken ? '<p class="gemini-key-status connected"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Power BI connected — AI will query live data via DAX</p>' : '<p class="gemini-key-status"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f0883e" stroke-width="3"><circle cx="12" cy="12" r="8"/></svg> Not signed in — AI will use model knowledge only</p>') +
+          // Backend status
+          '<label class="gemini-label">Live Data (Vercel Backend)</label>' +
+          '<p class="gemini-key-status connected"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> DAX queries routed via <code style="font-size:.75rem">' + DAX_API_URL + '</code></p>' +
         '</div>' +
         '<div class="gemini-modal-footer">' +
           '<button class="btn btn-ghost" onclick="document.getElementById(\'geminiSettingsModal\').remove()">Cancel</button>' +
@@ -616,7 +583,6 @@ var GeminiAI = (function() {
 
   // Update UI to show AI connection status
   function updateGeminiIndicators() {
-    var hasToken = (typeof pbiAccessToken !== "undefined") && !!pbiAccessToken;
     var provider = getProvider();
     var hasKey = isAvailable();
     var badges = document.querySelectorAll(".gemini-status-badge");
@@ -624,17 +590,8 @@ var GeminiAI = (function() {
     badges.forEach(function(badge) {
       if (hasKey && provider === "groq") {
         var mLabel = GROQ_MODELS.find(function(m) { return m.id === getGroqModel(); });
-        var label = mLabel ? mLabel.label : "Groq";
-        if (hasToken) {
-          badge.className = "gemini-status-badge connected groq";
-          badge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f0883e" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Groq Live';
-        } else {
-          badge.className = "gemini-status-badge connected groq";
-          badge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f0883e" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Groq';
-        }
-      } else if (hasKey && hasToken) {
-        badge.className = "gemini-status-badge connected";
-        badge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Gemini Live';
+        badge.className = "gemini-status-badge connected groq";
+        badge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f0883e" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> ' + (mLabel ? mLabel.label : "Groq");
       } else if (hasKey) {
         badge.className = "gemini-status-badge connected";
         badge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Gemini';
