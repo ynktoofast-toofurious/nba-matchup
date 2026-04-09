@@ -101,14 +101,18 @@ module.exports = async function handler(req, res) {
       client.release();
     }
   } catch (err) {
-    console.error("[/api/query] Error:", err.message);
+    console.error("[/api/query] Error:", err.message, "| Query:", (req.body && req.body.query || "").slice(0, 200));
 
-    // Don't leak internal DB errors to the client
+    // Return enough detail for debugging while not leaking internals
     const safeMessage = err.message.includes("statement_timeout")
       ? "Query timed out (10s limit)"
       : err.message.includes("syntax")
         ? "SQL syntax error: " + err.message.slice(0, 200)
-        : "Query execution failed";
+        : err.message.includes("does not exist")
+          ? "SQL error: " + err.message.slice(0, 200)
+          : err.message.includes("column")
+            ? "SQL error: " + err.message.slice(0, 200)
+            : "Query execution failed: " + err.message.slice(0, 200);
 
     return res.status(500).json({ error: safeMessage });
   }

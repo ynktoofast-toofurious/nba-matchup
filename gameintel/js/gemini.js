@@ -73,12 +73,14 @@ var GeminiAI = (function() {
       "RULES:\n" +
       "- Return ONLY the SQL query, no explanation, no markdown fences.\n" +
       "- Use double quotes around table names with spaces: \"Match by Team\"\n" +
+      "- All column names are lowercase — do NOT quote column names.\n" +
       "- Use standard PostgreSQL syntax: JOIN, WHERE, GROUP BY, ORDER BY, LIMIT.\n" +
       "- Limit results to 25 rows max using LIMIT.\n" +
       "- For win rate, use: COUNT(*) FILTER (WHERE result = 'W')::float / COUNT(*)\n" +
       "- For scores, home_pts and away_pts are in \"Match by Team\".\n" +
       "- The result column values are 'W' or 'L'.\n" +
       "- Use JOIN to connect tables (see relationships below).\n" +
+      "- Example JOIN: SELECT * FROM \"Match by Team\" m JOIN \"Teams\" t ON m.home_team = t.team_name\n" +
       "- If the question is about schema/metadata (not data), return exactly: NO_SQL_NEEDED\n" +
       "- If the question is conversational/greeting, return exactly: NO_SQL_NEEDED\n\n" +
       "DATABASE SCHEMA:\n" + buildModelSchema();
@@ -110,8 +112,9 @@ var GeminiAI = (function() {
   // Fallback prompt (no SQL, just model knowledge)
   function buildFallbackPrompt() {
     return "You are an expert NBA analytics AI assistant embedded in a Power BI dashboard called GameIntel.\n" +
-      "IMPORTANT: You do NOT have access to live data right now. The database connection may be down.\n" +
-      "For questions about specific player rosters, team stats, win rates, or scores — tell the user the database is currently unavailable.\n" +
+      "IMPORTANT: The SQL query for the user's question could not be executed successfully.\n" +
+      "Answer as best you can using your knowledge of the data model.\n" +
+      "For specific stats or scores, mention you can answer general questions about the model and suggest they rephrase.\n" +
       "You CAN answer general questions about the data model structure, divisions, conferences, and available data.\n" +
       "Do NOT guess or make up player-team assignments — the dataset may differ from public knowledge.\n" +
       "Be concise, confident. Use HTML tags (no markdown).\n" +
@@ -369,7 +372,7 @@ var GeminiAI = (function() {
                 });
             })
             .catch(function(sqlErr) {
-              console.warn("[GeminiAI] SQL execution failed:", sqlErr.message, "— falling back to AI knowledge");
+              console.warn("[GeminiAI] SQL execution failed:", sqlErr.message, "| SQL was:", sql);
               return queryWithModelKnowledge(userMessage, parsed);
             });
         })
@@ -429,7 +432,7 @@ var GeminiAI = (function() {
       filters.push({ table: "Teams", column: "team_name", sql: "Teams.team_name = '" + parsed.team.replace(/'/g, "''") + "'" });
     }
     if (parsed.division) {
-      filters.push({ table: "Teams", column: "Division", sql: "Teams.\"Division\" = '" + parsed.division.replace(/'/g, "''") + "'" });
+      filters.push({ table: "Teams", column: "division", sql: "\"Teams\".division = '" + parsed.division.replace(/'/g, "''") + "'" });
     }
     if (parsed.player) {
       filters.push({ table: "nba_players", column: "player_name", sql: "nba_players.player_name = '" + parsed.player.replace(/'/g, "''") + "'" });

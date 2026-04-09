@@ -24,7 +24,7 @@ var SEMANTIC_MODEL = {
       columns: {
         team_id:    { type: "text", description: "Unique team identifier" },
         team_name:  { type: "text", description: "Full team name (e.g. Los Angeles Lakers)" },
-        Division:   { type: "text", description: "NBA division (Atlantic, Central, Southeast, Northwest, Pacific, Southwest)" },
+        division:   { type: "text", description: "NBA division (Atlantic, Central, Southeast, Northwest, Pacific, Southwest)" },
         conference: { type: "text", description: "Eastern or Western Conference" }
       }
     },
@@ -46,8 +46,8 @@ var SEMANTIC_MODEL = {
     "Active Players": { expression: "DISTINCTCOUNT(nba_players[player_name])",                                                             description: "Number of active players" }
   },
   relationships: [
-    { from: "Match by Team[home_team]", to: "Teams[team_name]", description: "Links games to the Teams dimension by team name" },
-    { from: "nba_players[team_id]",     to: "Teams[team_id]",   description: "Links players to their team" }
+    { from: "\"Match by Team\".home_team", to: "\"Teams\".team_name", description: "Links games to the Teams dimension by team name" },
+    { from: "nba_players.team_id",         to: "\"Teams\".team_id",   description: "Links players to their team" }
   ],
   // Report visuals the user will see
   visuals: {
