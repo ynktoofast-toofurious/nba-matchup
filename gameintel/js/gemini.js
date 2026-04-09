@@ -88,7 +88,7 @@ var GeminiAI = (function() {
 
   // Prompt for Step 2: Interpret results
   function buildAnswerPrompt() {
-    return "You are an expert NBA analytics AI assistant in a Power BI dashboard called GameIntel.\n" +
+    return "You are an expert NBA analytics AI assistant in a Power BI dashboard called YNKIntel.\n" +
       "You have been given LIVE DATA from the PostgreSQL database.\n" +
       "Answer the user's question using the REAL DATA provided.\n\n" +
       "RULES:\n" +
@@ -111,7 +111,7 @@ var GeminiAI = (function() {
 
   // Fallback prompt (no SQL, just model knowledge)
   function buildFallbackPrompt() {
-    return "You are an expert NBA analytics AI assistant embedded in a Power BI dashboard called GameIntel.\n" +
+    return "You are an expert NBA analytics AI assistant embedded in a Power BI dashboard called YNKIntel.\n" +
       "IMPORTANT: The SQL query for the user's question could not be executed successfully.\n" +
       "Answer as best you can using your knowledge of the data model.\n" +
       "For specific stats or scores, mention you can answer general questions about the model and suggest they rephrase.\n" +
