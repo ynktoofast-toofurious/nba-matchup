@@ -335,7 +335,7 @@ var GeminiAI = (function() {
         .then(function(sqlResponse) {
           var sql = sqlResponse.trim().replace(/^```[\s\S]*?\n/, "").replace(/```$/, "").trim();
 
-          if (sql === "NO_SQL_NEEDED" || sql.toUpperCase().indexOf("SELECT") === -1) {
+          if (sql === "NO_SQL_NEEDED" || (sql.toUpperCase().indexOf("SELECT") === -1 && sql.toUpperCase().indexOf("WITH") === -1)) {
             console.log("[GeminiAI] AI says no SQL needed, using model knowledge");
             return queryWithModelKnowledge(userMessage, parsed);
           }
@@ -354,11 +354,19 @@ var GeminiAI = (function() {
                 "SQL QUERY EXECUTED:\n" + sql + "\n\n" +
                 "LIVE DATA RESULTS:\n" + resultText;
 
-              return callAI(buildAnswerPrompt(), interpretPrompt, { temperature: 0.7, maxTokens: 1200 });
-            })
-            .then(function(answer) {
-              console.log("[GeminiAI] Pipeline complete — live data answer ready");
-              return buildStructuredResponse(answer, parsed, sql, "live-db");
+              return callAI(buildAnswerPrompt(), interpretPrompt, { temperature: 0.7, maxTokens: 1200 })
+                .then(function(answer) {
+                  console.log("[GeminiAI] Pipeline complete — live data answer ready");
+                  return buildStructuredResponse(answer, parsed, sql, "live-db");
+                })
+                .catch(function(interpretErr) {
+                  // AI interpretation failed (rate limit etc.) — show raw data instead of fallback
+                  console.warn("[GeminiAI] Interpretation failed:", interpretErr.message, "— showing raw data");
+                  var rawAnswer = "<strong>Live data retrieved</strong> (" + rows.length + " rows):<br><br>" +
+                    "<pre style='font-size:.85em;overflow-x:auto'>" + resultText.replace(/</g, "&lt;") + "</pre>" +
+                    "<br><em>AI interpretation unavailable (rate limited). Data above is from the live database.</em>";
+                  return buildStructuredResponse(rawAnswer, parsed, sql, "live-db-raw");
+                });
             })
             .catch(function(sqlErr) {
               console.warn("[GeminiAI] SQL execution failed:", sqlErr.message, "— falling back to AI knowledge");
