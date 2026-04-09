@@ -77,6 +77,9 @@ var GeminiAI = (function() {
       "- Use standard PostgreSQL syntax: JOIN, WHERE, GROUP BY, ORDER BY, LIMIT.\n" +
       "- Limit results to 25 rows max using LIMIT.\n" +
       "- For win rate, use: COUNT(*) FILTER (WHERE result = 'W')::float / COUNT(*)\n" +
+      "- For home/away team win rate questions, include both wins and total games in output (e.g., home_wins, home_games, home_win_rate).\n" +
+      "- IMPORTANT RESULT SEMANTICS: in \"Match by Team\", result is from the HOME TEAM perspective for that row.\n" +
+      "- Therefore for an AWAY team's wins, use rows where away_team = target and result = 'L'.\n" +
       "- For scores, home_pts and away_pts are in \"Match by Team\".\n" +
       "- The result column values are 'W' or 'L'.\n" +
       "- Use JOIN to connect tables (see relationships below).\n" +
@@ -94,6 +97,8 @@ var GeminiAI = (function() {
       "RULES:\n" +
       "- Use the actual numbers from the data — these are REAL, not estimates.\n" +
       "- Be concise, confident, data-driven. Lead with the key insight.\n" +
+      "- For win-rate answers, include sample size (wins and games) to avoid overinterpreting small samples.\n" +
+      "- If the sample size is small (fewer than 10 games), explicitly say the sample is small.\n" +
       "- Format with HTML: <strong> for emphasis, <ul><li> for lists, <code> for column/measure names.\n" +
       "- Format percentages to 1 decimal place, numbers with commas.\n" +
       "- After presenting data, suggest which report visuals to explore for more detail.\n" +
