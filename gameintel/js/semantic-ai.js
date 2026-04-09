@@ -782,16 +782,19 @@ function renderSemanticResponse(response, parsed, targetEl) {
   var html = '<div class="ai-response-card">';
 
   // Answer section
-  var sourceClass = response.source === "gemini-live" ? "gemini-live" : (response.source === "gemini" ? "gemini" : "offline");
-  var sourceLabel = response.source === "gemini-live" ? "Gemini Live" : (response.source === "gemini" ? "Gemini" : "Offline AI");
+  var srcMap = { "live-db": ["gemini-live", "Live Data"], "live-db-raw": ["gemini-live", "Live Data (Raw)"], "gemini-live": ["gemini-live", "Gemini Live"], "gemini": ["gemini", "Gemini"] };
+  var srcInfo = srcMap[response.source] || ["offline", "Offline AI"];
+  var sourceClass = srcInfo[0];
+  var sourceLabel = srcInfo[1];
   html += '<div class="ai-answer-section">';
   html += '<div class="ai-answer-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> <span>AI Analysis</span><span class="ai-source-label ' + sourceClass + '">' + sourceLabel + '</span></div>';
   html += '<div class="ai-answer-body">' + response.answer + '</div>';
   if (response.insight) {
     html += '<div class="ai-insight"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0c000" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/><line x1="10" y1="17" x2="14" y2="17"/></svg> ' + response.insight + '</div>';
   }
-  if (response.daxQuery) {
-    html += '<details class="guide-dax-details"><summary>View DAX Query</summary><pre class="guide-dax-code">' + response.daxQuery.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") + '</pre></details>';
+  var showQuery = response.sqlQuery || response.daxQuery;
+  if (showQuery) {
+    html += '<details class="guide-dax-details"><summary>View SQL Query</summary><pre class="guide-dax-code">' + showQuery.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") + '</pre></details>';
   }
   html += '</div>';
 
@@ -826,10 +829,10 @@ function renderSemanticResponse(response, parsed, targetEl) {
   // Filter Logic
   if (response.filterLogic.length > 0) {
     html += '<div class="ai-filter-section">';
-    html += '<div class="ai-section-title">Filter Logic (DAX)</div>';
+    html += '<div class="ai-section-title">Filter Logic</div>';
     html += '<div class="ai-filter-code">';
     response.filterLogic.forEach(function(f) {
-      html += '<div class="ai-filter-line"><code class="ai-dax">' + escapeHtml(f.dax) + '</code></div>';
+      html += '<div class="ai-filter-line"><code class="ai-dax">' + escapeHtml(f.sql || f.dax || '') + '</code></div>';
     });
     html += '</div></div>';
   }
@@ -840,7 +843,7 @@ function renderSemanticResponse(response, parsed, targetEl) {
     html += '<button class="btn btn-primary btn-sm" onclick="viewReport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> View Report</button>';
   }
   if (response.filterLogic.length > 0) {
-    html += '<button class="btn btn-ghost btn-sm ai-copy-btn" onclick="copyFilterLogic(this)" data-filters=\'' + escapeHtml(JSON.stringify(response.filterLogic)) + '\'><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy DAX</button>';
+    html += '<button class="btn btn-ghost btn-sm ai-copy-btn" onclick="copyFilterLogic(this)" data-filters=\'' + escapeHtml(JSON.stringify(response.filterLogic)) + '\'><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy SQL</button>';
   }
   html += '</div>';
 

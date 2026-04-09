@@ -339,8 +339,11 @@ var GeminiAI = (function() {
           var sql = sqlResponse.trim().replace(/^```[\s\S]*?\n/, "").replace(/```$/, "").trim();
 
           if (sql === "NO_SQL_NEEDED" || (sql.toUpperCase().indexOf("SELECT") === -1 && sql.toUpperCase().indexOf("WITH") === -1)) {
-            console.log("[GeminiAI] AI says no SQL needed, using model knowledge");
-            return queryWithModelKnowledge(userMessage, parsed);
+            console.log("[GeminiAI] AI says no SQL needed, using model knowledge. Raw response:", sqlResponse.slice(0, 200));
+            return queryWithModelKnowledge(userMessage, parsed).then(function(resp) {
+              resp.insight = "AI decided no SQL query was needed (response: " + sqlResponse.trim().slice(0, 80) + ")";
+              return resp;
+            });
           }
 
           console.log("[GeminiAI] Step 2: Executing SQL:", sql);
@@ -373,7 +376,12 @@ var GeminiAI = (function() {
             })
             .catch(function(sqlErr) {
               console.warn("[GeminiAI] SQL execution failed:", sqlErr.message, "| SQL was:", sql);
-              return queryWithModelKnowledge(userMessage, parsed);
+              // Include debug info so user can see what went wrong
+              return queryWithModelKnowledge(userMessage, parsed).then(function(resp) {
+                resp.sqlQuery = sql;
+                resp.insight = "SQL execution failed: " + sqlErr.message;
+                return resp;
+              });
             });
         })
         .catch(function(err) {
