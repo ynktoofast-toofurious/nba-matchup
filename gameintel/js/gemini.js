@@ -278,7 +278,7 @@ var GeminiAI = (function() {
 
   var DAX_API_URL = (typeof CONFIG !== "undefined" && CONFIG.api && CONFIG.api.daxEndpoint)
     ? CONFIG.api.daxEndpoint
-    : "https://gameintel-api.vercel.app/api/dax";
+    : "https://gameintel.vercel.app/api/dax";
 
   function executeDAX(daxQuery) {
     return fetch(DAX_API_URL, {

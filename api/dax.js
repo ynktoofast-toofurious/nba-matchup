@@ -11,6 +11,7 @@ const PBI_DATASET_ID = process.env.PBI_DATASET_ID;
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://ynktoofast-toofurious.github.io",
+  "https://gameintel.vercel.app",
   "http://localhost:3000",
   "http://127.0.0.1:5500"
 ];
